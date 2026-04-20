@@ -3,83 +3,91 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RLCS PARIS | ANALYZER ONE-CAP</title>
+    <title>RLCS PARIS | ANALYZER PRO MATRIX</title>
     <style>
         @font-face { font-family: 'Bourgeois'; src: url('fonts/Bourgeois-Bold.ttf') format('truetype'); font-weight: bold; }
-        :root { --bg: #050505; --card-bg: #0f0f0f; --accent: #e24444; --text: #fff; --border: #222; }
+        :root { --bg: #050505; --card-bg: #0f0f0f; --accent: #e24444; --text: #fff; --border: #333; }
         * { box-sizing: border-box; font-family: 'Bourgeois', sans-serif; text-transform: uppercase; }
 
-        body { background-color: var(--bg); color: var(--text); margin: 0; padding: 15px; letter-spacing: 0.1px; }
-        .header { border-left: 5px solid var(--accent); margin-bottom: 20px; padding: 5px 15px; background: linear-gradient(90deg, #111 0%, transparent 100%); }
-        h1 { margin: 0; font-size: 1.8em; }
+        body { background-color: var(--bg); color: var(--text); margin: 0; padding: 10px; overflow-x: hidden; }
         
+        /* DASHBOARD PRINCIPAL */
         .groups-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
-        .group-card { background: var(--card-bg); border: 1px solid var(--border); padding: 12px; }
+        .group-card { background: var(--card-bg); border: 1px solid var(--border); padding: 15px; }
+        h2 { margin-top: 0; color: var(--accent); }
         
-        table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
-        th { background: #000; color: #666; font-size: 0.65em; padding: 6px; }
-        td { padding: 5px; border-bottom: 1px solid var(--border); text-align: center; font-size: 0.9em; color: #fff !important; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
+        th { background: #000; color: #777; font-size: 0.7em; padding: 8px; }
+        td { padding: 8px; border-bottom: 1px solid var(--border); text-align: center; color: #fff !important; }
 
-        .team-input-group { display: flex; align-items: center; gap: 5px; }
-        .input-name { background: transparent; border: none; color: #fff; width: 100%; font-family: inherit; font-weight: bold; outline: none; font-size: 0.9em; }
-        .color-picker { width: 18px; height: 18px; border: 1px solid #444; background: transparent; cursor: pointer; padding: 0; border-radius: 3px; }
+        .prob-cell { font-size: 0.9em; font-weight: bold; border: 1px solid #222; }
 
-        .prob-cell { font-size: 0.8em; font-weight: bold; transition: background 0.3s; }
-
-        .matrix-btn { background: #111; color: #fff; border: 1px solid var(--accent); padding: 8px; width: 100%; cursor: pointer; font-weight: bold; margin-bottom: 10px; display: none; font-size: 0.8em; }
-        .matrix-btn.active { display: block; }
-
-        /* SCENARIO MATRIX - COMPACT 4-IN-1 */
+        /* MATRIZ DE CAPTURA - ESTILO EXCEL PRO */
         .matrix-window { 
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            background: #000; z-index: 1000; padding: 10px; overflow-y: auto;
+            background: #000; z-index: 1000; padding: 10px;
         }
-        .close-matrix { position: sticky; top: 5px; float: right; background: var(--accent); color: white; border: none; padding: 5px 10px; cursor: pointer; font-weight: bold; z-index: 1001; }
+        .close-matrix { position: absolute; top: 10px; right: 20px; background: var(--accent); color: white; border: none; padding: 10px 20px; cursor: pointer; font-weight: bold; z-index: 1010; }
 
-        #matrix-content { 
+        .matrix-wrapper { 
             display: grid; 
-            grid-template-columns: repeat(2, 1fr); 
-            gap: 10px; 
-            max-width: 1400px; 
-            margin: 0 auto; 
+            grid-template-columns: 1fr 1fr; 
+            grid-template-rows: 1fr 1fr; 
+            gap: 15px; 
+            height: calc(100vh - 40px);
+            width: 100%;
         }
 
-        .matrix-section { background: #080808; padding: 8px; border: 1px solid #1a1a1a; }
-        .matrix-title { color: var(--accent); font-size: 0.85em; margin-bottom: 4px; display: flex; justify-content: space-between; }
-        
+        .matrix-section { 
+            display: flex; 
+            flex-direction: column; 
+            border: 1px solid #222; 
+            background: #080808;
+            padding: 5px;
+        }
+
+        .matrix-header-info {
+            background: var(--accent);
+            color: #000;
+            font-size: 0.9em;
+            padding: 4px 10px;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+        }
+
         .matrix-grid { 
             display: grid; 
-            grid-template-columns: repeat(6, 1fr); 
-            gap: 1px; 
-            background: #1a1a1a; 
+            grid-template-columns: 60px repeat(6, 1fr); /* Columna para M1 */
+            grid-template-rows: 40px repeat(6, 1fr);    /* Fila para M2 */
+            flex-grow: 1;
+            gap: 2px;
+            background: #222;
         }
+
         .matrix-cell { 
-            aspect-ratio: 1 / 1;
-            padding: 2px; 
-            text-align: center; 
             background: #0f0f0f; 
             display: flex; 
             flex-direction: column; 
             justify-content: center; 
-            align-items: center;
-            font-weight: bold; 
-            line-height: 1;
+            align-items: center; 
+            font-weight: bold;
+            text-align: center;
         }
-        .cell-team-name { font-size: 0.7em; margin-bottom: 2px; }
-        .cell-score-ref { font-size: 0.45em; opacity: 0.7; color: inherit; }
 
-        /* MATCH LIST & GOALS CENTERED */
-        .match-list { display: flex; flex-direction: column; gap: 5px; }
-        .match-item { display: flex; flex-direction: column; align-items: center; background: #121212; padding: 8px; border: 1px solid #222; }
-        .match-main-row { display: grid; grid-template-columns: 1fr 100px 1fr; width: 100%; align-items: center; margin-bottom: 5px; }
-        .team-label { font-size: 0.9em; font-weight: bold; color: #fff !important; }
-        
-        .score-box { display: flex; justify-content: center; gap: 4px; }
-        .score-box input { background: #000; border: 1px solid #333; color: white; text-align: center; width: 35px; height: 35px; font-size: 1.2em; font-weight: bold; outline: none; }
-        
-        .goals-container { display: flex; justify-content: center; align-items: center; gap: 8px; width: 100%; border-top: 1px solid #1a1a1a; padding-top: 5px; }
-        .goals-label { font-size: 0.6em; color: #444; }
-        .goals-container input { width: 40px; height: 25px; background: #0a0a0a; border: 1px solid #222; color: var(--accent); text-align: center; font-weight: bold; font-size: 0.9em; border-radius: 2px; }
+        /* Estilos de encabezados dentro de la matriz */
+        .label-cell { background: #1a1a1a; color: #888; font-size: 0.6em; }
+        .m2-header { background: #151515; color: var(--accent); font-size: 0.75em; border-bottom: 2px solid var(--accent); }
+        .m1-header { background: #151515; color: var(--accent); font-size: 0.75em; border-right: 2px solid var(--accent); }
+
+        .team-box { font-size: 0.95em; padding: 2px; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
+
+        /* INPUTS DASHBOARD */
+        .match-item { background: #121212; padding: 10px; border: 1px solid #222; margin-bottom: 5px; text-align: center; }
+        .score-box input { background: #000; border: 1px solid #444; color: white; width: 40px; height: 40px; text-align: center; font-size: 1.4em; font-weight: bold; }
+        .goals-container { margin-top: 8px; display: flex; justify-content: center; gap: 10px; border-top: 1px solid #222; padding-top: 5px; }
+        .goals-container input { width: 50px; background: #050505; border: 1px solid #333; color: var(--accent); text-align: center; font-weight: bold; }
+
     </style>
 </head>
 <body>
@@ -88,18 +96,18 @@
     <div id="groups-container" class="groups-grid"></div>
 
     <div id="matrix-window" class="matrix-window">
-        <button class="close-matrix" onclick="closeMatrix()">CLOSE [X]</button>
-        <div id="matrix-content"></div>
+        <button class="close-matrix" onclick="closeMatrix()">CERRAR [X]</button>
+        <div id="matrix-content" class="matrix-wrapper"></div>
     </div>
 
 <script>
-const ITERATIONS = 100000;
+const ITERATIONS = 50000;
 const SCORES = [[3,0],[3,1],[3,2],[2,3],[1,3],[0,3]];
 const DEFAULT_COLORS = ['#e24444', '#fff200', '#00f2ff', '#00ff41'];
 
-let data = JSON.parse(localStorage.getItem('rlcs_onecap_v1')) || {
+let data = JSON.parse(localStorage.getItem('rlcs_final_v3')) || {
     groups: Array.from({length: 4}, (_, i) => ({
-        id: i, name: `GROUP ${String.fromCharCode(65 + i)}`,
+        id: i, name: `GRUPO ${String.fromCharCode(65 + i)}`,
         teams: Array.from({length: 4}, (_, j) => ({ id: j, name: `TEAM ${j+1}`, seed: j + 1, color: DEFAULT_COLORS[j] })),
         matches: [
             {t1: 0, t2: 3, s1: null, s2: null, g1: 0, g2: 0}, {t1: 1, t2: 2, s1: null, s2: null, g1: 0, g2: 0},
@@ -128,22 +136,8 @@ function getSortedStandings(teams, matches) {
         };
         const aS = stats(a.id), bS = stats(b.id);
         if (bS.sW !== aS.sW) return bS.sW - aS.sW;
-        const tied = teams.filter(t => stats(t.id).sW === aS.sW).map(t => t.id);
-        if (tied.length > 1) {
-            const h2hM = matches.filter(m => tied.includes(m.t1) && tied.includes(m.t2) && (m.s1 === 3 || m.s2 === 3));
-            const h2h = (id) => {
-                let w = 0, gd = 0, gld = 0;
-                h2hM.forEach(m => {
-                    if(m.t1 === id) { w += (m.s1>m.s2?1:0); gd += (m.s1-m.s2); gld += (m.g1-m.g2); }
-                    else if(m.t2 === id) { w += (m.s2>m.s1?1:0); gd += (m.s2-m.s1); gld += (m.g2-m.g1); }
-                });
-                return { w, gd, gld };
-            };
-            const aH = h2h(a.id), bH = h2h(b.id);
-            if (bH.w !== aH.w) return bH.w - aH.w;
-            if (bH.gd !== aH.gd) return bH.gd - aH.gd;
-            if (bH.gld !== aH.gld) return bH.gld - aH.gld;
-        }
+        
+        // Desempate simplificado para velocidad de simulación
         if (bS.diff !== aS.diff) return bS.diff - aS.diff;
         if (bS.glD !== aS.glD) return bS.glD - aS.glD;
         return a.seed - b.seed;
@@ -154,6 +148,7 @@ function openMatrix(groupId) {
     const g = data.groups[groupId];
     const pend = g.matches.filter(m => m.s1 === null || (m.s1 < 3 && m.s2 < 3));
     if (pend.length !== 2) return;
+    
     document.getElementById('matrix-window').style.display = 'block';
     const content = document.getElementById('matrix-content');
     
@@ -164,12 +159,20 @@ function openMatrix(groupId) {
     let html = "";
     for (let pos = 0; pos < 4; pos++) {
         html += `<div class="matrix-section">
-            <div class="matrix-title">
-                <span>${pos + 1}º PLACE</span>
-                <span style="font-size: 0.7em; opacity: 0.6;">M1: ${t1a}-${t1b} | M2: ${t2a}-${t2b}</span>
+            <div class="matrix-header-info">
+                <span>${pos + 1}º PUESTO</span>
+                <span>M1: ${t1a}/${t1b} | M2: ${t2a}/${t2b}</span>
             </div>
-            <div class="matrix-grid">`;
+            <div class="matrix-grid">
+                <div class="matrix-cell label-cell">M1\\M2</div>`;
+        
+        // Fila superior (Resultados M2)
+        SCORES.forEach(s => html += `<div class="matrix-cell m2-header">${s[0]}-${s[1]}</div>`);
+        
         SCORES.forEach(s1 => {
+            // Columna izquierda (Resultados M1)
+            html += `<div class="matrix-cell m1-header">${s1[0]}-${s1[1]}</div>`;
+            
             SCORES.forEach(s2 => {
                 const sim = g.matches.map(m => {
                     if (m === m1) return {...m, s1: s1[0], s2: s1[1]};
@@ -177,9 +180,8 @@ function openMatrix(groupId) {
                     return m;
                 });
                 const team = getSortedStandings(g.teams, sim)[pos];
-                html += `<div class="matrix-cell" style="background: ${team.color}; color: ${getContrastColor(team.color)};">
-                            <div class="cell-team-name">${team.name}</div>
-                            <div class="cell-score-ref">${s1[0]}-${s1[1]} | ${s2[0]}-${s2[1]}</div>
+                html += `<div class="matrix-cell" style="background: ${team.color}">
+                            <div class="team-box" style="color: ${getContrastColor(team.color)}">${team.name}</div>
                          </div>`;
             });
         });
@@ -199,9 +201,9 @@ function render() {
             for(let i=0; i<ITERATIONS; i++) {
                 const simM = g.matches.map(m => {
                     if (m.s1 === 3 || m.s2 === 3) return m;
-                    let c1 = m.s1 || 0, c2 = m.s2 || 0;
+                    let c1 = 0, c2 = 0;
                     while (c1 < 3 && c2 < 3) { Math.random() > 0.5 ? c1++ : c2++; }
-                    return {...m, s1: c1, s2: c2, g1: (Math.random()*4)|0, g2: (Math.random()*4)|0};
+                    return {...m, s1: c1, s2: c2, g1: 0, g2: 0};
                 });
                 const res = getSortedStandings(g.teams, simM);
                 for(let idx=0; idx<4; idx++) r.find(x => x.id === res[idx].id).counts[idx]++;
@@ -215,8 +217,8 @@ function render() {
         card.className = 'group-card';
         
         let html = `<h2>${g.name}</h2>`;
-        html += `<button class="matrix-btn ${pCount === 2 ? 'active' : ''}" onclick="openMatrix(${g.id})">SCENARIO MATRIX (ONE-CAP)</button>`;
-        html += `<table><thead><tr><th>TEAM / COLOR</th><th>SERIES</th><th>GAMES</th><th>1ST</th><th>2ND</th><th>3RD</th><th>4TH</th></tr></thead><tbody>`;
+        html += `<button class="matrix-btn ${pCount === 2 ? 'active' : ''}" onclick="openMatrix(${g.id})">GENERAR MATRIZ DE CAPTURA</button>`;
+        html += `<table><thead><tr><th>EQUIPO</th><th>SERIES</th><th>GAMES</th><th>1º</th><th>2º</th><th>3º</th><th>4º</th></tr></thead><tbody>`;
         
         curTable.forEach(team => {
             const s = simResults.find(x => x.id === team.id);
@@ -226,16 +228,12 @@ function render() {
                 else if(m.t2===team.id){sW+=(m.s2>m.s1?1:0); sL+=(m.s2<m.s1?1:0); gW+=m.s2; gL+=m.s1;}
             }});
             html += `<tr>
-                <td><div class="team-input-group">
-                    <input type="color" class="color-picker" value="${team.color}" onchange="data.groups[${g.id}].teams.find(t=>t.id===${team.id}).color=this.value; save();">
-                    <input class="input-name" value="${team.name}" onchange="data.groups[${g.id}].teams.find(t=>t.id===${team.id}).name=this.value; save();">
-                </div></td>
+                <td style="text-align:left"><input type="color" class="color-picker" value="${team.color}" onchange="data.groups[${g.id}].teams.find(t=>t.id===${team.id}).color=this.value; save();">
+                    <input class="input-name" value="${team.name}" onchange="data.groups[${g.id}].teams.find(t=>t.id===${team.id}).name=this.value; save();"></td>
                 <td>${sW}-${sL}</td><td>${gW}-${gL}</td>
                 ${s.counts.map(c => {
-                    const pct = (c/ITERATIONS);
-                    const opacity = pct.toFixed(2);
-                    const cellColor = pct > 0.4 ? "#fff" : "#666";
-                    return `<td class="prob-cell" style="background: rgba(226, 68, 68, ${opacity}); color: ${cellColor} !important;">${(pct*100).toFixed(1)}%</td>`;
+                    const p = c/ITERATIONS;
+                    return `<td class="prob-cell" style="background:rgba(226,68,68,${p}); color:${p>0.4?'#fff':'#777'}">${(p*100).toFixed(1)}%</td>`;
                 }).join('')}
             </tr>`;
         });
@@ -245,18 +243,18 @@ function render() {
             const t1 = g.teams.find(t=>t.id===m.t1);
             const t2 = g.teams.find(t=>t.id===m.t2);
             html += `<div class="match-item">
-                <div class="match-main-row">
-                    <div class="team-label" style="text-align:right;">${t1.name}</div>
+                <div style="display:grid; grid-template-columns: 1fr 100px 1fr; align-items:center;">
+                    <span style="text-align:right; font-weight:bold">${t1.name}</span>
                     <div class="score-box">
                         <input type="number" value="${m.s1??''}" onchange="upd(${g.id},${mi},'s1',this.value)">
                         <input type="number" value="${m.s2??''}" onchange="upd(${g.id},${mi},'s2',this.value)">
                     </div>
-                    <div class="team-label" style="text-align:left;">${t2.name}</div>
+                    <span style="text-align:left; font-weight:bold">${t2.name}</span>
                 </div>
                 <div class="goals-container">
-                    <span class="goals-label">GOALS:</span>
+                    <span>GOLES:</span>
                     <input type="number" value="${m.g1}" onchange="upd(${g.id},${mi},'g1',this.value)">
-                    <span class="goals-label">-</span>
+                    <span>-</span>
                     <input type="number" value="${m.g2}" onchange="upd(${g.id},${mi},'g2',this.value)">
                 </div>
             </div>`;
@@ -267,7 +265,7 @@ function render() {
 }
 
 function upd(gi, mi, f, v) { data.groups[gi].matches[mi][f] = v === '' ? null : parseInt(v); save(); }
-function save() { localStorage.setItem('rlcs_onecap_v1', JSON.stringify(data)); render(); }
+function save() { localStorage.setItem('rlcs_final_v3', JSON.stringify(data)); render(); }
 render();
 </script>
 </body>
