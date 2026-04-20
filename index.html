@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RLCS PARIS | SCENARIO ANALYZER</title>
+    <title>RLCS PARIS | PRO ANALYZER</title>
     <style>
         @font-face { font-family: 'Bourgeois'; src: url('fonts/Bourgeois-Bold.ttf') format('truetype'); font-weight: bold; }
         :root { --bg: #050505; --card-bg: #0f0f0f; --accent: #e24444; --text: #fff; --border: #222; }
@@ -24,36 +24,37 @@
         .input-name { background: transparent; border: none; color: inherit; width: 100%; font-family: inherit; font-weight: bold; outline: none; font-size: 0.95em; }
         .color-picker { width: 22px; height: 22px; border: 1px solid #444; background: transparent; cursor: pointer; padding: 0; border-radius: 4px; }
 
-        .prob-cell { font-size: 0.85em; font-weight: bold; color: #888; } /* Probabilidades en gris neutro en la tabla */
+        .prob-cell { font-size: 0.85em; font-weight: bold; color: #888; }
 
         .matrix-btn { background: #111; color: #fff; border: 1px solid var(--accent); padding: 10px; width: 100%; cursor: pointer; font-weight: bold; margin-bottom: 10px; display: none; font-size: 0.9em; }
         .matrix-btn.active { display: block; }
 
-        /* COMPACT MATRIX FOR CAPTURE */
+        /* SCENARIO MATRIX STYLES */
         .matrix-window { 
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
             background: #000; z-index: 1000; padding: 10px; overflow-y: auto;
         }
         .close-matrix { position: sticky; top: 5px; float: right; background: var(--accent); color: white; border: none; padding: 5px 12px; cursor: pointer; font-weight: bold; z-index: 1001; font-size: 0.8em; }
 
-        .matrix-section { margin-bottom: 15px; }
-        .matrix-title { color: var(--accent); font-size: 1.1em; margin-bottom: 5px; border-left: 3px solid var(--accent); padding-left: 8px; }
+        .matrix-section { margin-bottom: 25px; }
+        .matrix-info-header { background: #111; padding: 10px; border: 1px solid var(--accent); margin-bottom: 5px; font-size: 0.8em; display: flex; justify-content: space-around; color: #aaa; }
+        .matrix-info-header span { color: #fff; font-weight: bold; }
         
-        .matrix-grid { display: grid; grid-template-columns: 60px repeat(6, 1fr); gap: 1px; background: #333; }
-        .matrix-cell { padding: 2px; text-align: center; background: #0f0f0f; font-size: 0.6em; min-height: 28px; display: flex; flex-direction: column; justify-content: center; font-weight: bold; }
+        .matrix-grid { display: grid; grid-template-columns: 80px repeat(6, 1fr); gap: 1px; background: #333; }
+        .matrix-cell { padding: 2px; text-align: center; background: #0f0f0f; font-size: 0.6em; min-height: 32px; display: flex; flex-direction: column; justify-content: center; font-weight: bold; }
         .header-cell { background: #1a1a1a; color: #888; font-size: 0.55em; }
+        .match-ref-label { color: var(--accent); font-size: 0.5em; margin-bottom: 2px; opacity: 0.7; }
 
         .match-list { display: flex; flex-direction: column; gap: 5px; }
-        .match-item { display: grid; grid-template-columns: 1fr 100px 1fr; align-items: center; background: #121212; padding: 8px; border: 1px solid #222; }
+        .match-item { display: grid; grid-template-columns: 1fr 110px 1fr; align-items: center; background: #121212; padding: 8px; border: 1px solid #222; }
         .team-label { font-size: 1em; font-weight: bold; }
         
         .score-box { display: flex; justify-content: center; gap: 4px; }
-        .score-box input { background: #000; border: 1px solid #333; color: white; text-align: center; width: 35px; height: 35px; font-size: 1.2em; font-weight: bold; outline: none; }
+        .score-box input { background: #000; border: 1px solid #333; color: white; text-align: center; width: 38px; height: 38px; font-size: 1.3em; font-weight: bold; outline: none; }
         
-        /* GOALS UI IMPROVEMENT */
         .goals-container { grid-column: 1 / span 3; display: flex; justify-content: center; align-items: center; gap: 10px; margin-top: 8px; border-top: 1px solid #222; padding-top: 5px; }
         .goals-label { font-size: 0.7em; color: #555; }
-        .goals-container input { width: 45px; height: 25px; background: #0a0a0a; border: 1px solid #333; color: var(--accent); text-align: center; font-weight: bold; font-size: 1em; border-radius: 3px; }
+        .goals-container input { width: 50px; height: 30px; background: #0a0a0a; border: 1px solid #333; color: var(--accent); text-align: center; font-weight: bold; font-size: 1.1em; border-radius: 3px; }
     </style>
 </head>
 <body>
@@ -74,7 +75,7 @@ const ITERATIONS = 100000;
 const SCORES = [[3,0],[3,1],[3,2],[2,3],[1,3],[0,3]];
 const DEFAULT_COLORS = ['#e24444', '#fff200', '#00f2ff', '#00ff41'];
 
-let data = JSON.parse(localStorage.getItem('rlcs_eng_v1')) || {
+let data = JSON.parse(localStorage.getItem('rlcs_pro_final_v1')) || {
     groups: Array.from({length: 4}, (_, i) => ({
         id: i, name: `GROUP ${String.fromCharCode(65 + i)}`,
         teams: Array.from({length: 4}, (_, j) => ({ 
@@ -135,15 +136,25 @@ function openMatrix(groupId) {
     if (pend.length !== 2) return;
     document.getElementById('matrix-window').style.display = 'block';
     const content = document.getElementById('matrix-content');
+    
     const m1 = pend[0], m2 = pend[1];
-    let html = `<h2>${g.name} - SCENARIO CAPTURE</h2>`;
+    const t1a = g.teams.find(t=>t.id===m1.t1).name, t1b = g.teams.find(t=>t.id===m1.t2).name;
+    const t2a = g.teams.find(t=>t.id===m2.t1).name, t2b = g.teams.find(t=>t.id===m2.t2).name;
+
+    let html = `<h2>${g.name} - SCENARIO CAPTURE</h2>
+                <div class="matrix-info-header">
+                    <div>ROWS (M1): <span>${t1a} vs ${t1b}</span></div>
+                    <div>COLUMNS (M2): <span>${t2a} vs ${t2b}</span></div>
+                </div>`;
+                
     for (let pos = 0; pos < 4; pos++) {
         html += `<div class="matrix-section">
-            <div class="matrix-title">${pos + 1}º PLACE</div>
-            <div class="matrix-grid"><div class="matrix-cell header-cell">M1↓ M2→</div>`;
-        SCORES.forEach(s => html += `<div class="matrix-cell header-cell">${s[0]}-${s[1]}</div>`);
+            <div class="matrix-title">${pos + 1}º PLACE SCENARIOS</div>
+            <div class="matrix-grid">
+                <div class="matrix-cell header-cell">M1↓ | M2→</div>`;
+        SCORES.forEach(s => html += `<div class="matrix-cell header-cell"><span class="match-ref-label">M2</span>${s[0]}-${s[1]}</div>`);
         SCORES.forEach(s1 => {
-            html += `<div class="matrix-cell header-cell">${s1[0]}-${s1[1]}</div>`;
+            html += `<div class="matrix-cell header-cell"><span class="match-ref-label">M1</span>${s1[0]}-${s1[1]}</div>`;
             SCORES.forEach(s2 => {
                 const sim = g.matches.map(m => {
                     if (m === m1) return {...m, s1: s1[0], s2: s1[1]};
@@ -187,14 +198,14 @@ function render() {
         
         let html = `<h2>${g.name}</h2>`;
         html += `<button class="matrix-btn ${pCount === 2 ? 'active' : ''}" onclick="openMatrix(${g.id})">VIEW CAPTURE MATRIX</button>`;
-        html += `<table><thead><tr><th>TEAM / COLOR</th><th>W-L</th><th>1ST</th><th>2ND</th><th>3RD</th><th>4TH</th></tr></thead><tbody>`;
+        html += `<table><thead><tr><th>TEAM / COLOR</th><th>SERIES</th><th>GAMES</th><th>1ST</th><th>2ND</th><th>3RD</th><th>4TH</th></tr></thead><tbody>`;
         
         curTable.forEach(team => {
             const s = simResults.find(x => x.id === team.id);
-            let sW=0, sL=0;
+            let sW=0, sL=0, gW=0, gL=0;
             g.matches.forEach(m => { if(m.s1===3||m.s2===3){
-                if(m.t1===team.id){sW+=(m.s1>m.s2?1:0); sL+=(m.s1<m.s2?1:0);}
-                else if(m.t2===team.id){sW+=(m.s2>m.s1?1:0); sL+=(m.s2<m.s1?1:0);}
+                if(m.t1===team.id){sW+=(m.s1>m.s2?1:0); sL+=(m.s1<m.s2?1:0); gW+=m.s1; gL+=m.s2;}
+                else if(m.t2===team.id){sW+=(m.s2>m.s1?1:0); sL+=(m.s2<m.s1?1:0); gW+=m.s2; gL+=m.s1;}
             }});
             html += `<tr>
                 <td><div class="team-input-group">
@@ -202,6 +213,7 @@ function render() {
                     <input class="input-name" style="color:${team.color}" value="${team.name}" onchange="data.groups[${g.id}].teams.find(t=>t.id===${team.id}).name=this.value; save();">
                 </div></td>
                 <td>${sW}-${sL}</td>
+                <td>${gW}-${gL}</td>
                 ${s.counts.map(c => `<td class="prob-cell">${((c/ITERATIONS)*100).toFixed(1)}%</td>`).join('')}
             </tr>`;
         });
@@ -231,7 +243,7 @@ function render() {
 }
 
 function upd(gi, mi, f, v) { data.groups[gi].matches[mi][f] = v === '' ? null : parseInt(v); save(); }
-function save() { localStorage.setItem('rlcs_eng_v1', JSON.stringify(data)); render(); }
+function save() { localStorage.setItem('rlcs_pro_final_v1', JSON.stringify(data)); render(); }
 render();
 </script>
 </body>
