@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Calculadora de Escenarios CRL</title>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+    <style>
+        body { font-family: sans-serif; background: #1a1a1a; color: white; padding: 20px; }
+        .group-container { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .match-card { background: #333; padding: 10px; margin: 5px 0; border-radius: 5px; cursor: grab; }
+        .probability-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        .probability-table th, .probability-table td { border: 1px solid #444; padding: 8px; text-align: center; }
+        .pos-1 { background: #2e7d32; } /* Verde - Clasificado */
+        .pos-4 { background: #c62828; } /* Rojo - Eliminado */
+        input { width: 40px; background: #444; color: white; border: none; text-align: center; }
+    </style>
+</head>
+<body>
+
+    <h1>Simulador Monte Carlo - Grupos</h1>
+    
+    <div id="app">
+        </div>
+
+<script>
+// --- CONFIGURACIÓN INICIAL ---
+let state = JSON.parse(localStorage.getItem('crl_sim_state')) || {
+    teams: [
+        { id: 1, name: "Maryville", seed: 1 },
+        { id: 2, name: "Northwood", seed: 2 },
+        { id: 3, name: "West Virginia", seed: 3 },
+        { id: 4, name: "St. Clair", seed: 4 }
+    ],
+    matches: [
+        { id: 1, t1: 1, t2: 4, s1: null, s2: null, g1: 0, g2: 0 },
+        { id: 2, t1: 2, t2: 3, s1: null, s2: null, g1: 0, g2: 0 },
+        { id: 3, t1: 1, t2: 3, s1: null, s2: null, g1: 0, g2: 0 },
+        { id: 4, t1: 2, t2: 4, s1: null, s2: null, g1: 0, g2: 0 },
+        { id: 5, t1: 1, t2: 2, s1: null, s2: null, g1: 0, g2: 0 },
+        { id: 6, t1: 3, t2: 4, s1: null, s2: null, g1: 0, g2: 0 }
+    ]
+};
+
+function save() {
+    localStorage.setItem('crl_sim_state', JSON.stringify(state));
+    render();
+}
+
+// --- LÓGICA DE DESEMPATE (CRITERIOS 1-6) ---
+function sortTeams(teamsToSort, matchHistory) {
+    return teamsToSort.sort((a, b) => {
+        // 1. Victorias totales (Series ganadas)
+        let aWins = matchHistory.filter(m => (m.t1 === a.id && m.s1 > m.s2) || (m.t2 === a.id && m.s2 > m.s1)).length;
+        let bWins = matchHistory.filter(m => (m.t1 === b.id && m.s1 > m.s2) || (m.t2 === b.id && m.s2 > m.s1)).length;
+        if (bWins !== aWins) return bWins - aWins;
+
+        // Para H2H y otros, necesitamos ver si hay empate
+        const tiedTeams = teamsToSort.filter(t => {
+            let tWins = matchHistory.filter(m => (m.t1 === t.id && m.s1 > m.s2) || (m.t2 === t.id && m.s2 > m.s1)).length;
+            return tWins === aWins;
+        });
+
+        if (tiedTeams.length > 1) {
+            const tiedIds = tiedTeams.map(t => t.id);
+            const miniLeague = matchHistory.filter(m => tiedIds.includes(m.t1) && tiedIds.includes(m.t2));
+
+            // 1 & 2. H2H Series y Partidos entre empatados
+            let aH2H = 0, bH2H = 0, aPartidosDiff = 0, bPartidosDiff = 0;
+            miniLeague.forEach(m => {
+                if(m.t1 === a.id) { aH2H += (m.s1 > m.s2 ? 1 : 0); aPartidosDiff += (m.s1 - m.s2); }
+                if(m.t2 === a.id) { aH2H += (m.s2 > m.s1 ? 1 : 0); aPartidosDiff += (m.s2 - m.s1); }
+                if(m.t1 === b.id) { bH2H += (m.s1 > m.s2 ? 1 : 0); bPartidosDiff += (m.s1 - m.s2); }
+                if(m.t2 === b.id) { bH2H += (m.s2 > m.s1 ? 1 : 0); bPartidosDiff += (m.s2 - m.s1); }
+            });
+            if (bH2H !== aH2H) return bH2H - aH2H;
+            if (bPartidosDiff !== aPartidosDiff) return bPartidosDiff - aPartidosDiff;
+        }
+
+        // 3. Diferencial Partidos Total
+        let aTotalPD = 0, bTotalPD = 0;
+        matchHistory.forEach(m => {
+            if(m.t1 === a.id) aTotalPD += (m.s1 - m.s2);
+            if(m.t2 === a.id) aTotalPD += (m.s2 - m.s1);
+            if(m.t1 === b.id) bTotalPD += (m.s1 - m.s2);
+            if(m.t2 === b.id) bTotalPD += (m.s2 - m.s1);
+        });
+        if (bTotalPD !== aTotalPD) return bTotalPD - aTotalPD;
+
+        // 5. Diferencial Goles Total (Simplificado para el ejemplo)
+        let aGD = 0, bGD = 0;
+        matchHistory.forEach(m => {
+            if(m.t1 === a.id) aGD += (m.g1 - m.g2);
+            if(m.t2 === a.id) aGD += (m.g2 - m.g1);
+            if(m.t1 === b.id) bGD += (m.g1 - m.g2);
+            if(m.t2 === b.id) bGD += (m.g2 - m.g1);
+        });
+        if (bGD !== aGD) return bGD - aGD;
+
+        // 6. Seed (Menor es mejor)
+        return a.seed - b.seed;
+    });
+}
+
+// --- SIMULACIÓN ---
+function runMonteCarlo(iterations = 5000) {
+    let results = state.teams.map(t => ({ id: t.id, counts: [0, 0, 0, 0] }));
+
+    for (let i = 0; i < iterations; i++) {
+        let simMatches = state.matches.map(m => {
+            if (m.s1 !== null) return { ...m };
+            // Simular BO5 aleatorio
+            const win1 = Math.random() > 0.5;
+            const s1 = win1 ? 3 : Math.floor(Math.random() * 3);
+            const s2 = !win1 ? 3 : Math.floor(Math.random() * 3);
+            return { ...m, s1, s2, g1: Math.floor(Math.random()*10), g2: Math.floor(Math.random()*10) };
+        });
+
+        let finalTable = sortTeams([...state.teams], simMatches);
+        finalTable.forEach((team, index) => {
+            results.find(r => r.id === team.id).counts[index]++;
+        });
+    }
+    return results;
+}
+
+// --- RENDERIZADO ---
+function render() {
+    const app = document.getElementById('app');
+    const simResults = runMonteCarlo();
+    
+    let html = `<div class="group-container"><div><h3>Partidos (Arrastra para ordenar)</h3><div id="match-list">`;
+    
+    state.matches.forEach((m, idx) => {
+        const t1 = state.teams.find(t => t.id === m.t1);
+        const t2 = state.teams.find(t => t.id === m.t2);
+        html += `
+            <div class="match-card" data-idx="${idx}">
+                ${t1.name} 
+                <input type="number" value="${m.s1 ?? ''}" onchange="updateMatch(${idx}, 's1', this.value)"> : 
+                <input type="number" value="${m.s2 ?? ''}" onchange="updateMatch(${idx}, 's2', this.value)"> 
+                ${t2.name} 
+                <small>(Goles: <input type="number" value="${m.g1}" onchange="updateMatch(${idx}, 'g1', this.value)"> - 
+                <input type="number" value="${m.g2}" onchange="updateMatch(${idx}, 'g2', this.value)">)</small>
+            </div>`;
+    });
+
+    html += `</div></div><div><h3>Posibilidades Finales</h3><table class="probability-table">
+        <tr><th>Equipo</th><th>1st</th><th>2nd</th><th>3rd</th><th>4th</th></tr>`;
+
+    simResults.forEach(res => {
+        const team = state.teams.find(t => t.id === res.id);
+        html += `<tr><td>${team.name}</td>`;
+        res.counts.forEach((c, i) => {
+            const pct = ((c / 5000) * 100).toFixed(1);
+            html += `<td class="pos-${i+1}" style="opacity: ${pct/100 + 0.2}">${pct}%</td>`;
+        });
+        html += `</tr>`;
+    });
+
+    html += `</table></div></div>`;
+    app.innerHTML = html;
+
+    // Inicializar Drag & Drop
+    new Sortable(document.getElementById('match-list'), {
+        animation: 150,
+        onEnd: (evt) => {
+            const movedItem = state.matches.splice(evt.oldIndex, 1)[0];
+            state.matches.splice(evt.newIndex, 0, movedItem);
+            save();
+        }
+    });
+}
+
+function updateMatch(idx, field, value) {
+    state.matches[idx][field] = value === '' ? null : parseInt(value);
+    save();
+}
+
+render();
+</script>
+</body>
+</html>
