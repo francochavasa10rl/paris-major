@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RLCS PARIS - ULTIMATE ANALYZER</title>
+    <title>RLCS PARIS - ADVANCED MATRIX</title>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <style>
         @font-face { font-family: 'Bourgeois'; src: url('fonts/Bourgeois-Bold.ttf') format('truetype'); font-weight: bold; }
@@ -15,58 +15,60 @@
         body { background-color: var(--bg); color: var(--text); margin: 0; padding: 40px 20px; letter-spacing: 0.2px; }
         .header { border-left: 6px solid var(--accent); margin-bottom: 40px; padding: 15px 25px; background: linear-gradient(90deg, #111 0%, transparent 100%); }
         h1 { margin: 0; font-size: 2.8em; line-height: 1; }
-        .subtitle { color: #666; margin-top: 5px; font-size: 0.9em; }
-
+        
         .groups-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(620px, 1fr)); gap: 35px; }
-        .group-card { background: var(--card-bg); border: 1px solid var(--border); padding: 25px; border-radius: 0; position: relative; }
-        h2 { color: var(--accent); font-size: 1.8em; margin: 0 0 20px 0; border-bottom: 1px solid #222; padding-bottom: 8px; }
+        .group-card { background: var(--card-bg); border: 1px solid var(--border); padding: 25px; margin-bottom: 20px; }
+        
+        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; table-layout: fixed; }
+        th { background: #000; color: #555; font-size: 0.75em; padding: 12px 5px; }
+        td { padding: 10px; border-bottom: 1px solid var(--border); text-align: center; font-size: 1.1em; }
 
-        table { width: 100%; border-collapse: collapse; margin-bottom: 30px; table-layout: fixed; }
-        th { background: #000; color: #555; font-size: 0.75em; padding: 12px 5px; text-align: center; }
-        th:first-child { width: 30%; text-align: left; }
-        td { padding: 12px 5px; border-bottom: 1px solid var(--border); text-align: center; font-size: 1.1em; }
-
-        .input-name { background: transparent; border: none; color: white; width: 100%; font-family: inherit; font-size: 1em; outline: none; }
         .prob-cell { font-weight: bold; font-size: 0.9em; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); }
         .stat-val { color: #555; font-size: 0.85em; }
 
-        .match-list { margin-top: 30px; display: flex; flex-direction: column; gap: 10px; }
-        .match-item { display: grid; grid-template-columns: 1fr 110px 1fr; align-items: center; background: #161616; padding: 18px 15px; border: 1px solid transparent; }
-        .team-name-match { font-size: 1.3em; font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .matrix-btn { background: #222; color: #fff; border: 1px solid var(--accent); padding: 12px; width: 100%; cursor: pointer; font-weight: bold; margin-bottom: 20px; display: none; }
+        .matrix-btn.active { display: block; }
 
-        .score-box { display: flex; align-items: center; justify-content: center; gap: 6px; }
-        .score-box input { background: #000; border: 1px solid #333; color: white; text-align: center; width: 40px; height: 40px; font-size: 1.3em; font-weight: bold; }
-        .goals-row { grid-column: 1 / span 3; text-align: center; font-size: 0.8em; color: #444; margin-top: 10px; display: flex; justify-content: center; gap: 12px; }
-        .goals-row input { width: 32px; background: transparent; border: 1px solid #222; color: #777; text-align: center; }
+        /* Modal / Ventana de Matriz */
+        .matrix-window { 
+            display: none; position: fixed; top: 5%; left: 5%; width: 90%; height: 90%; 
+            background: #0a0a0a; z-index: 1000; border: 2px solid var(--accent); 
+            padding: 20px; overflow-y: auto; box-shadow: 0 0 50px rgba(0,0,0,0.9);
+        }
+        .close-matrix { position: sticky; top: 0; float: right; background: var(--accent); color: white; border: none; padding: 10px 20px; cursor: pointer; font-weight: bold; z-index: 1001; }
 
-        .matrix-btn { background: #222; color: #fff; border: 1px solid var(--accent); padding: 12px; width: 100%; cursor: pointer; font-weight: bold; margin-bottom: 20px; transition: 0.3s; display: none; }
-        .matrix-btn.active { display: block; border-width: 2px; }
-        .matrix-btn:hover { background: var(--accent); }
+        .matrix-section { margin-bottom: 50px; }
+        .matrix-title { color: var(--accent); font-size: 1.5em; margin-bottom: 15px; border-left: 4px solid var(--accent); padding-left: 10px; }
+        
+        .matrix-grid { display: grid; grid-template-columns: 100px repeat(6, 1fr); gap: 2px; background: #222; border: 1px solid #222; }
+        .matrix-cell { padding: 8px 4px; text-align: center; background: #0f0f0f; font-size: 0.75em; min-height: 45px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .header-cell { background: #1a1a1a; color: #888; font-weight: bold; }
+        .tie-text { color: #e24444; font-size: 0.7em; margin-top: 2px; font-weight: bold; }
 
-        .matrix-container { display: none; background: #000; padding: 20px; overflow-x: auto; border: 1px solid #333; margin-top: 15px; border-radius: 4px; }
-        .matrix-grid { display: grid; grid-template-columns: 100px repeat(6, 1fr); gap: 3px; min-width: 800px; }
-        .matrix-cell { padding: 8px 4px; text-align: center; background: #111; font-size: 0.85em; display: flex; align-items: center; justify-content: center; border: 1px solid #1a1a1a; }
-        .header-cell { background: #1a1a1a; color: var(--accent); font-weight: bold; font-size: 0.75em; }
-
-        .btn-reset { background: transparent; color: var(--accent); border: 2px solid var(--accent); padding: 12px 30px; cursor: pointer; font-family: inherit; font-weight: bold; margin-bottom: 30px; transition: 0.2s; }
-        .btn-reset:hover { background: var(--accent); color: white; }
+        .match-item { display: grid; grid-template-columns: 1fr 110px 1fr; align-items: center; background: #161616; padding: 15px; margin-bottom: 8px; }
+        .score-box input { background: #000; border: 1px solid #333; color: white; text-align: center; width: 40px; height: 40px; font-size: 1.2em; font-weight: bold; }
+        .input-name { background: transparent; border: none; color: white; width: 100%; font-family: inherit; font-size: 1em; outline: none; }
     </style>
 </head>
 <body>
 
     <div class="header">
         <h1>RLCS PARIS MAJOR</h1>
-        <div class="subtitle">100,000 SIMULATIONS • DYNAMIC LIVE ENGINE • SCENARIO MATRIX READY</div>
+        <div style="color: #666; font-size: 0.9em;">SYSTEM: 100K SIMS + MULTI-POSITION SCENARIO MATRIX</div>
     </div>
 
-    <button class="btn-reset" onclick="resetData()">HARD RESET DATA</button>
     <div id="groups-container" class="groups-grid"></div>
+
+    <div id="matrix-window" class="matrix-window">
+        <button class="close-matrix" onclick="closeMatrix()">CLOSE WINDOW [X]</button>
+        <div id="matrix-content"></div>
+    </div>
 
 <script>
 const ITERATIONS = 100000;
 const SCORES = [[3,0],[3,1],[3,2],[2,3],[1,3],[0,3]];
 
-let data = JSON.parse(localStorage.getItem('rlcs_paris_ultra_full')) || {
+let data = JSON.parse(localStorage.getItem('rlcs_paris_final_v3')) || {
     groups: Array.from({length: 4}, (_, i) => ({
         id: i, name: `GROUP ${String.fromCharCode(65 + i)}`,
         teams: Array.from({length: 4}, (_, j) => ({ id: j, name: `TEAM ${String.fromCharCode(65+i)}${j+1}`, seed: j + 1 })),
@@ -78,28 +80,12 @@ let data = JSON.parse(localStorage.getItem('rlcs_paris_ultra_full')) || {
     }))
 };
 
-function formatProb(count) {
-    if (count === 0) return "0.00";
-    if (count === ITERATIONS) return "100.00";
-    let p = (count / ITERATIONS) * 100;
-    return p < 0.01 ? "0.01" : p > 99.99 ? "99.99" : p.toFixed(2);
-}
-
-function simulateRemainingBO5(s1, s2) {
-    let curS1 = s1 || 0; let curS2 = s2 || 0;
-    if (curS1 >= 3 || curS2 >= 3) return [curS1, curS2];
-    while (curS1 < 3 && curS2 < 3) {
-        if (Math.random() > 0.5) curS1++; else curS2++;
-    }
-    return [curS1, curS2];
-}
-
 function getSortedStandings(teams, matches) {
-    return [...teams].sort((a, b) => {
+    let tieByGoals = false;
+    const sorted = [...teams].sort((a, b) => {
         const stats = (id) => {
             let sW = 0, gW = 0, gL = 0, glF = 0, glA = 0;
             matches.forEach(m => {
-                if (m.s1 === null && m.s2 === null) return;
                 if (m.s1 === 3 || m.s2 === 3) {
                     if (m.t1 === id) { sW += (m.s1>m.s2?1:0); gW += m.s1; gL += m.s2; glF += m.g1; glA += m.g2; }
                     else if (m.t2 === id) { sW += (m.s2>m.s1?1:0); gW += m.s2; gL += m.s1; glF += m.g2; glA += m.g1; }
@@ -107,9 +93,10 @@ function getSortedStandings(teams, matches) {
             });
             return { sW, diff: gW - gL, glD: glF - glA };
         };
+
         const aS = stats(a.id), bS = stats(b.id);
         if (bS.sW !== aS.sW) return bS.sW - aS.sW;
-        
+
         const tied = teams.filter(t => stats(t.id).sW === aS.sW).map(t => t.id);
         if (tied.length > 1) {
             const h2hM = matches.filter(m => tied.includes(m.t1) && tied.includes(m.t2) && (m.s1 === 3 || m.s2 === 3));
@@ -124,42 +111,72 @@ function getSortedStandings(teams, matches) {
             const aH = h2h(a.id), bH = h2h(b.id);
             if (bH.w !== aH.w) return bH.w - aH.w;
             if (bH.gd !== aH.gd) return bH.gd - aH.gd;
-            if (bH.gld !== aH.gld) return bH.gld - aH.gld;
+            if (bH.gld !== aH.gld) {
+                tieByGoals = true; // Si llegamos acá, la diferencia de goles está decidiendo
+                return bH.gld - aH.gld;
+            }
         }
         if (bS.diff !== aS.diff) return bS.diff - aS.diff;
-        if (bS.glD !== aS.glD) return bS.glD - aS.glD;
+        if (bS.glD !== aS.glD) { tieByGoals = true; return bS.glD - aS.glD; }
         return a.seed - b.seed;
     });
+    return { table: sorted, tieByGoals };
 }
 
-function generateMatrix(groupId) {
+function openMatrix(groupId) {
     const g = data.groups[groupId];
     const pend = g.matches.filter(m => m.s1 === null || (m.s1 < 3 && m.s2 < 3));
-    const container = document.getElementById(`matrix-${groupId}`);
     if (pend.length !== 2) return;
+
+    const win = document.getElementById('matrix-window');
+    const content = document.getElementById('matrix-content');
+    win.style.display = 'block';
     
-    container.style.display = 'block';
     const m1 = pend[0], m2 = pend[1];
     const t1n = g.teams[m1.t1].name, t2n = g.teams[m1.t2].name;
     const t3n = g.teams[m2.t1].name, t4n = g.teams[m2.t2].name;
 
-    let html = `<p style="color:var(--accent); margin-bottom:10px;">1° PLACE SCENARIOS (GD/GOALS FIXED AT CURRENT):</p>`;
-    html += `<div class="matrix-grid"><div class="matrix-cell header-cell">${m1.id} vs ${m2.id}</div>`;
-    SCORES.forEach(s => html += `<div class="matrix-cell header-cell">${t3n} ${s[0]}-${s[1]} ${t4n}</div>`);
+    let html = `<h1>${g.name} - SCENARIO ANALYZER</h1>`;
     
-    SCORES.forEach(s1 => {
-        html += `<div class="matrix-cell header-cell">${t1n} ${s1[0]}-${s1[1]} ${t2n}</div>`;
-        SCORES.forEach(s2 => {
-            const sim = g.matches.map(m => {
-                if (m === m1) return {...m, s1: s1[0], s2: s1[1]};
-                if (m === m2) return {...m, s1: s2[0], s2: s2[1]};
-                return m;
+    for (let pos = 0; pos < 4; pos++) {
+        html += `<div class="matrix-section">
+            <div class="matrix-title">${pos + 1}° POSITION SCENARIOS</div>
+            <div class="matrix-grid">
+                <div class="matrix-cell header-cell">${t1n} vs ${t2n} ↓<br>${t3n} vs ${t4n} →</div>`;
+        
+        SCORES.forEach(s => html += `<div class="matrix-cell header-cell">${t3n}<br>${s[0]}-${s[1]}<br>${t4n}</div>`);
+
+        SCORES.forEach(s1 => {
+            html += `<div class="matrix-cell header-cell">${t1n} ${s1[0]}-${s1[1]} ${t2n}</div>`;
+            SCORES.forEach(s2 => {
+                const sim = g.matches.map(m => {
+                    if (m === m1) return {...m, s1: s1[0], s2: s1[1]};
+                    if (m === m2) return {...m, s1: s2[0], s2: s2[1]};
+                    return m;
+                });
+                const result = getSortedStandings(g.teams, sim);
+                const team = result.table[pos];
+                html += `<div class="matrix-cell">
+                    <strong>${team.name}</strong>
+                    ${result.tieByGoals ? '<span class="tie-text">TIEBREAKER: GOALS</span>' : ''}
+                </div>`;
             });
-            const table = getSortedStandings(g.teams, sim);
-            html += `<div class="matrix-cell">${table[0].name}</div>`;
         });
-    });
-    container.innerHTML = html + `</div>`;
+        html += `</div></div>`;
+    }
+    content.innerHTML = html;
+}
+
+function closeMatrix() { document.getElementById('matrix-window').style.display = 'none'; }
+
+// --- Resto de funciones de renderizado y lógica (manteniendo la calidad anterior) ---
+
+function simulateRemainingBO5(s1, s2) {
+    let curS1 = s1 || 0; let curS2 = s2 || 0;
+    while (curS1 < 3 && curS2 < 3) {
+        if (Math.random() > 0.5) curS1++; else curS2++;
+    }
+    return [curS1, curS2];
 }
 
 function runSim(group) {
@@ -170,8 +187,8 @@ function runSim(group) {
             const [fs1, fs2] = simulateRemainingBO5(m.s1, m.s2);
             return {...m, s1: fs1, s2: fs2, g1: (Math.random()*6)|0, g2: (Math.random()*6)|0};
         });
-        const table = getSortedStandings(group.teams, simM);
-        for(let idx=0; idx<4; idx++) res.find(r => r.id === table[idx].id).counts[idx]++;
+        const result = getSortedStandings(group.teams, simM);
+        for(let idx=0; idx<4; idx++) res.find(r => r.id === result.table[idx].id).counts[idx]++;
     }
     return res;
 }
@@ -181,14 +198,14 @@ function render() {
     container.innerHTML = '';
     data.groups.forEach(g => {
         const sim = runSim(g);
-        const curTable = getSortedStandings(g.teams, g.matches);
+        const curTable = getSortedStandings(g.teams, g.matches).table;
         const pendCount = g.matches.filter(m => m.s1 === null || (m.s1 < 3 && m.s2 < 3)).length;
+        
         const card = document.createElement('div');
         card.className = 'group-card';
         
         let html = `<h2>${g.name}</h2>`;
-        html += `<button class="matrix-btn ${pendCount === 2 ? 'active' : ''}" onclick="generateMatrix(${g.id})">SHOW LAST ROUND MATRIX</button>`;
-        html += `<div id="matrix-${g.id}" class="matrix-container"></div>`;
+        html += `<button class="matrix-btn ${pendCount === 2 ? 'active' : ''}" onclick="openMatrix(${g.id})">GENERATE FULL SCENARIO MATRIX</button>`;
         html += `<table><thead><tr><th>TEAM</th><th>W-L</th><th>GD</th><th>1ST</th><th>2ND</th><th>3RD</th><th>4TH</th></tr></thead><tbody>`;
         
         curTable.forEach(team => {
@@ -201,44 +218,38 @@ function render() {
                 }
             });
             const gd = gW - gL;
+            const p = (c) => ((c/ITERATIONS)*100).toFixed(2);
             html += `<tr>
                 <td><input class="input-name" value="${team.name}" onchange="updateName(${g.id},${team.id},this.value)"></td>
                 <td class="stat-val">${sW}-${sL}</td>
                 <td class="stat-val" style="color:${gd>0?'#2ecc71':gd<0?'#e24444':'#555'}">${gd>0?'+'+gd:gd}</td>
-                ${s.counts.map(c => `<td class="prob-cell" style="background: rgba(226,68,68, ${(c/ITERATIONS)})">${formatProb(c)}%</td>`).join('')}
+                ${s.counts.map(c => `<td class="prob-cell" style="background: rgba(226,68,68, ${(c/ITERATIONS)})">${p(c)}%</td>`).join('')}
             </tr>`;
         });
 
-        html += `</tbody></table><div class="match-list" id="l-${g.id}">`;
+        html += `</tbody></table><div class="match-list">`;
         g.matches.forEach((m, idx) => {
-            const t1 = g.teams.find(t => t.id === m.t1), t2 = g.teams.find(t => t.id === m.t2);
             html += `<div class="match-item">
-                <span class="team-name-match" style="text-align:right">${t1.name}</span>
+                <span style="text-align:right; font-weight:bold">${g.teams.find(t=>t.id===m.t1).name}</span>
                 <div class="score-box">
-                    <input type="number" min="0" max="3" value="${m.s1??''}" onchange="upd(${g.id},${idx},'s1',this.value)">
-                    <input type="number" min="0" max="3" value="${m.s2??''}" onchange="upd(${g.id},${idx},'s2',this.value)">
+                    <input type="number" value="${m.s1??''}" onchange="upd(${g.id},${idx},'s1',this.value)">
+                    <input type="number" value="${m.s2??''}" onchange="upd(${g.id},${idx},'s2',this.value)">
                 </div>
-                <span class="team-name-match" style="text-align:left">${t2.name}</span>
-                <div class="goals-row">GOALS: 
-                    <input type="number" value="${m.g1}" onchange="upd(${g.id},${idx},'g1',this.value)"> - 
-                    <input type="number" value="${m.g2}" onchange="upd(${g.id},${idx},'g2',this.value)">
+                <span style="text-align:left; font-weight:bold">${g.teams.find(t=>t.id===m.t2).name}</span>
+                <div style="grid-column: 1 / span 3; text-align: center; font-size: 0.7em; color: #444; margin-top: 5px;">
+                    GOALS: <input style="width:30px; background:transparent; border:1px solid #222; color:#777" type="number" value="${m.g1}" onchange="upd(${g.id},${idx},'g1',this.value)"> - 
+                    <input style="width:30px; background:transparent; border:1px solid #222; color:#777" type="number" value="${m.g2}" onchange="upd(${g.id},${idx},'g2',this.value)">
                 </div>
             </div>`;
         });
         card.innerHTML = html + `</div>`;
         container.appendChild(card);
-        new Sortable(document.getElementById(`l-${g.id}`), { animation: 150, onEnd: (e) => {
-            const mov = data.groups[g.id].matches.splice(e.oldIndex, 1)[0];
-            data.groups[g.id].matches.splice(e.newIndex, 0, mov);
-            save();
-        }});
     });
 }
 
-function save() { localStorage.setItem('rlcs_paris_ultra_full', JSON.stringify(data)); render(); }
-function resetData() { if(confirm("¿RESET?")) { localStorage.removeItem('rlcs_paris_ultra_full'); location.reload(); } }
 function updateName(gi, ti, v) { data.groups[gi].teams.find(t=>t.id===ti).name = v; save(); }
 function upd(gi, mi, f, v) { data.groups[gi].matches[mi][f] = v === '' ? null : parseInt(v); save(); }
+function save() { localStorage.setItem('rlcs_paris_final_v3', JSON.stringify(data)); render(); }
 render();
 </script>
 </body>
