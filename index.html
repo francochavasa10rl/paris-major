@@ -67,7 +67,7 @@
 const SCORES = [[3,0],[3,1],[3,2],[2,3],[1,3],[0,3]];
 let data = JSON.parse(localStorage.getItem('rlcs_pro_v1')) || {
     groups: Array.from({length: 4}, (_, i) => ({
-        id: i, name: `GRUPO ${String.fromCharCode(65 + i)}`,
+        id: i, name: `GROUP ${String.fromCharCode(65 + i)}`,
         teams: Array.from({length: 4}, (_, j) => ({ id: j, name: `TEAM ${j+1}`, seed: j + 1, color: ['#e24444', '#fff200', '#00f2ff', '#00ff41'][j] })),
         matches: [{t1: 0, t2: 3, s1: null, s2: null, g1: 0, g2: 0}, {t1: 1, t2: 2, s1: null, s2: null, g1: 0, g2: 0},
                   {t1: 0, t2: 2, s1: null, s2: null, g1: 0, g2: 0}, {t1: 1, t2: 3, s1: null, s2: null, g1: 0, g2: 0},
