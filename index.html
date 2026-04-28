@@ -1,111 +1,142 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RLCS Major 2 - LCQ Tracker</title>
+    <title>RLCS MAJOR 2 - PRO TRACKER</title>
     <style>
         @font-face { font-family: 'Bourgeois'; src: url('fonts/Bourgeois-Bold.ttf') format('truetype'); font-weight: bold; }
-        :root { --bg: #050505; --card-bg: #0f0f0f; --accent: #e24444; --text: #fff; --border: #222; }
+        :root { --bg: #050505; --card-bg: #0f0f0f; --accent: #e24444; --text: #fff; --border: #222; --win: #22c55e; }
         * { box-sizing: border-box; font-family: 'Bourgeois', sans-serif; text-transform: uppercase; }
 
         body { background-color: var(--bg); color: var(--text); margin: 0; padding: 15px; }
         .header { border-left: 5px solid var(--accent); margin-bottom: 20px; padding: 5px 15px; background: linear-gradient(90deg, #111 0%, transparent 100%); margin-top: 30px; }
+        .header:first-child { margin-top: 0; }
+        
+        /* TABLA LCQ */
         .lcq-container { background: var(--card-bg); border: 1px solid var(--border); padding: 15px; border-radius: 4px; margin-bottom: 30px; }
-        
-        table { width: 100%; border-collapse: collapse; margin-bottom: 15px; font-size: 0.9em; }
-        td, th { padding: 10px; text-align: center; border-bottom: 1px solid #1a1a1a; }
-        th { color: #555; font-size: 0.75em; background: #111; }
-        
-        tr.top-4 td { background: rgba(226, 68, 68, 0.1); font-weight: bold; }
-        tr.top-4 td:first-child { border-left: 3px solid var(--accent); }
+        .lcq-table { width: 100%; border-collapse: collapse; }
+        .lcq-table th { color: #555; font-size: 0.7em; text-align: center; padding-bottom: 10px; }
+        .lcq-table td { padding: 10px; text-align: center; border-bottom: 1px solid #1a1a1a; }
+        .secured-row { background: rgba(34, 197, 94, 0.15) !important; color: var(--win) !important; font-weight: bold; }
+        .secured-row td:first-child { border-left: 4px solid var(--win); }
 
         .groups-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
         .group-card { background: var(--card-bg); border: 1px solid var(--border); padding: 15px; border-radius: 4px; }
         
-        .score-box input { background: #000; border: 1px solid #333; color: white; width: 35px; text-align: center; font-weight: bold; }
-        .input-name { background: transparent; border: none; color: #fff; font-weight: bold; width: 100%; }
-        
-        .bracket-board { display: flex; gap: 20px; overflow-x: auto; padding: 20px 0; align-items: flex-start; }
-        .bracket-col { display: flex; flex-direction: column; gap: 10px; min-width: 200px; }
-        .b-match { background: #111; border: 1px solid #333; margin-bottom: 10px; }
-        .b-team { padding: 8px; cursor: pointer; border-bottom: 1px solid #222; font-size: 0.8em; }
-        .b-team.winner { background: #1e3a1e; color: #fff; }
-        .b-team.loser { opacity: 0.4; }
-        .prob-cell { font-size: 0.85em; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
+        td { padding: 8px; text-align: center; color: #fff; border-bottom: 1px solid #1a1a1a; }
+        th { color: #555; font-size: 0.7em; padding-bottom: 10px; }
+
+        .input-name { background: transparent; border: none; color: #fff; width: 100%; font-family: inherit; font-weight: bold; outline: none; font-size: 1em; padding: 0; }
+        .color-picker { width: 20px; height: 20px; border: none; background: transparent; cursor: pointer; padding: 0; margin-right: 8px; }
+        .prob-cell { font-size: 0.9em; font-weight: bold; }
+
+        .matrix-btn { background: var(--accent); color: #000; border: none; padding: 12px; width: 100%; cursor: pointer; font-weight: bold; margin-bottom: 15px; display: none; }
+        .matrix-btn.active { display: block; }
+
+        .matrix-window { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 1000; padding: 20px; overflow: hidden; }
+        .matrix-controls { display: flex; justify-content: flex-end; padding-bottom: 10px; }
+        .close-matrix { background: var(--accent); color: #000; border: none; padding: 8px 25px; cursor: pointer; font-weight: bold; font-size: 1em; border-radius: 2px; }
+
+        .matrix-wrapper { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 10px; height: calc(100vh - 80px); }
+        .matrix-section { background: #080808; border: 1px solid #222; display: flex; flex-direction: column; overflow: hidden; }
+        .matrix-header-info { background: #111; color: var(--accent); font-size: 0.85em; padding: 5px 10px; font-weight: bold; display: flex; justify-content: space-between; border-bottom: 1px solid var(--accent); }
+        .matrix-grid { display: grid; grid-template-columns: 50px repeat(6, 1fr); grid-template-rows: 35px repeat(6, 1fr); flex-grow: 1; gap: 1px; background: #222; }
+        .matrix-cell { background: #0f0f0f; display: flex; align-items: center; justify-content: center; font-weight: bold; text-align: center; font-size: 0.9em; }
+        .m-head { background: #1a1a1a; color: #777; font-size: 0.6em; }
+        .m-axis { background: #151515; color: var(--accent); font-size: 0.7em; }
+
+        .match-list { display: flex; flex-direction: column; gap: 8px; }
+        .match-item { background: #121212; padding: 10px; border: 1px solid #222; cursor: grab; transition: transform 0.2s; }
+        .match-main { display: grid; grid-template-columns: 1fr 100px 1fr; align-items: center; gap: 15px; }
+        .score-box input { background: #000; border: 1px solid #333; color: white; width: 40px; height: 40px; text-align: center; font-size: 1.4em; font-weight: bold; outline: none; }
+        .goals-container { margin-top: 10px; display: flex; justify-content: center; align-items: center; gap: 10px; border-top: 1px solid #1a1a1a; padding-top: 8px; }
+        .goals-container input { width: 50px; background: #050505; border: 1px solid #333; color: var(--accent); text-align: center; font-weight: bold; padding: 3px; }
+
+        .bracket-board { display: flex; gap: 25px; overflow-x: auto; padding: 20px 0; }
+        .bracket-col { display: flex; flex-direction: column; gap: 15px; min-width: 220px; }
+        .b-match { background: #111; border: 1px solid #333; border-radius: 4px; overflow: hidden; display: flex; flex-direction: column; }
+        .b-match-title { font-size: 0.65em; color: #888; text-align: center; background: #0a0a0a; padding: 4px; border-bottom: 1px solid #222; }
+        .b-team { padding: 10px; cursor: pointer; font-size: 0.85em; transition: 0.2s; border-bottom: 1px solid #1a1a1a; display: flex; align-items: center; gap: 8px; user-select: none; }
+        .b-team.winner { background: #1e3a1e; color: #fff; font-weight: bold; }
+        .b-team.loser { opacity: 0.3; }
+        .b-team.tbd { color: #555; cursor: default; }
+        .color-bar { width: 5px; height: 18px; border-radius: 2px; }
     </style>
 </head>
 <body>
 
-    <div class="header"><h1>LCQ REGION STANDINGS (SPOT EXTRA WORLDS)</h1></div>
+    <div class="header"><h1>LCQ REGION STANDINGS (WORLDS SPOTS)</h1></div>
     <div class="lcq-container">
-        <table id="lcq-table">
+        <table class="lcq-table">
             <thead>
                 <tr>
-                    <th>RANK</th>
-                    <th style="text-align: left;">REGION</th>
-                    <th>AVG POINTS (M1+M2)</th>
+                    <th>#</th>
+                    <th style="text-align:left">REGION</th>
+                    <th>AVG (M1+M2)</th>
                     <th>M2 MIN SECURED</th>
-                    <th>TIEBREAKER (BEST M1 + BEST M2)</th>
+                    <th>TIEBREAKER</th>
                 </tr>
             </thead>
             <tbody id="lcq-body"></tbody>
         </table>
     </div>
 
-    <div class="header"><h1>GROUPS & SIMULATION</h1></div>
+    <div class="header"><h1>RLCS MAJOR GROUPS</h1></div>
     <div id="groups-container" class="groups-grid"></div>
 
     <div class="header"><h1>PLAYOFFS BRACKET</h1></div>
     <div id="bracket-container" class="bracket-board"></div>
 
+    <div id="matrix-window" class="matrix-window">
+        <div class="matrix-controls"><button class="close-matrix" onclick="closeMatrix()">CERRAR</button></div>
+        <div id="matrix-content" class="matrix-wrapper"></div>
+    </div>
+
 <script>
-// Puntos oficiales Major 2
-const POINTS_MAP = {
-    'WINNER': 36,
-    'FINALIST': 24,
-    'SEMIS': 16,
-    'LB_QF': 12,
-    'LB_R2': 8,
-    'LB_R1': 6,
-    'GROUPS_4TH': 4
+// --- CONFIGURACIÓN DE PUNTOS ---
+const POINTS_MAP = { 'WINNER': 36, 'FINALIST': 24, 'SEMIS': 16, 'LB_QF': 12, 'LB_R2': 8, 'LB_R1': 6, 'GROUPS_4TH': 4 };
+const REGION_M1 = {
+    'EU': { pts: 72, teams: 5, best: 30 }, 'NA': { pts: 32, teams: 4, best: 14 },
+    'MENA': { pts: 19, teams: 2, best: 14 }, 'SAM': { pts: 8, teams: 2, best: 5 },
+    'OCE': { pts: 5, teams: 1, best: 5 }, 'APAC': { pts: 3, teams: 1, best: 3 }, 'SSA': { pts: 3, teams: 1, best: 3 }
 };
 
-// Datos fijos del Major 1
-const REGION_M1_DATA = {
-    'EU': { m1_pts: 72, m1_teams: 5, m1_best: 30 },
-    'NA': { m1_pts: 32, m1_teams: 4, m1_best: 14 },
-    'MENA': { m1_pts: 19, m1_teams: 2, m1_best: 14 },
-    'SAM': { m1_pts: 8, m1_teams: 2, m1_best: 5 },
-    'OCE': { m1_pts: 5, m1_teams: 1, m1_best: 5 },
-    'APAC': { m1_pts: 3, m1_teams: 1, m1_best: 3 },
-    'SSA': { m1_pts: 3, m1_teams: 1, m1_best: 3 }
+const SCORES = [[3,0],[3,1],[3,2],[2,3],[1,3],[0,3]];
+let data = JSON.parse(localStorage.getItem('rlcs_pro_final')) || {
+    groups: [
+        { id:0, name:'GROUP A', teams:[{id:0,name:'TEAM A1',region:'EU',seed:1,color:'#e24444'},{id:1,name:'TEAM A2',region:'NA',seed:2,color:'#fff200'},{id:2,name:'TEAM A3',region:'SAM',seed:3,color:'#00f2ff'},{id:3,name:'TEAM A4',region:'APAC',seed:4,color:'#00ff41'}], matches:[] },
+        { id:1, name:'GROUP B', teams:[{id:4,name:'TEAM B1',region:'EU',seed:1,color:'#e24444'},{id:5,name:'TEAM B2',region:'NA',seed:2,color:'#fff200'},{id:6,name:'TEAM B3',region:'MENA',seed:3,color:'#00f2ff'},{id:7,name:'TEAM B4',region:'SSA',seed:4,color:'#00ff41'}], matches:[] },
+        { id:2, name:'GROUP C', teams:[{id:8,name:'TEAM C1',region:'EU',seed:1,color:'#e24444'},{id:9,name:'TEAM C2',region:'NA',seed:2,color:'#fff200'},{id:10,name:'TEAM C3',region:'MENA',seed:3,color:'#00f2ff'},{id:11,name:'TEAM C4',region:'OCE',seed:4,color:'#00ff41'}], matches:[] },
+        { id:3, name:'GROUP D', teams:[{id:12,name:'TEAM D1',region:'EU',seed:1,color:'#e24444'},{id:13,name:'TEAM D2',region:'NA',seed:2,color:'#fff200'},{id:14,name:'TEAM D3',region:'EU',seed:3,color:'#00f2ff'},{id:15,name:'TEAM D4',region:'SAM',seed:4,color:'#00ff41'}], matches:[] }
+    ],
+    bracket: {}
 };
 
-const DEFAULT_GROUPS = [
-    { id: 0, name: 'GROUP A', teams: [{id:0, name:'VITALITY', region:'EU', seed:1, color:'#f0e300'}, {id:1, name:'KC', region:'EU', seed:2, color:'#005299'}, {id:2, name:'WILDCARD', region:'OCE', seed:3, color:'#ff4b00'}, {id:3, name:'FUT', region:'NA', seed:4, color:'#dddddd'}], matches: [{t1:0,t2:3,s1:null,s2:null},{t1:1,t2:2,s1:null,s2:null},{t1:0,t2:2,s1:null,s2:null},{t1:1,t2:3,s1:null,s2:null},{t1:0,t2:1,s1:null,s2:null},{t1:2,t2:3,s1:null,s2:null}] },
-    { id: 1, name: 'GROUP B', teams: [{id:4, name:'NRG', region:'NA', seed:1, color:'#000'}, {id:5, name:'MIBR', region:'SAM', seed:2, color:'#00f'}, {id:6, name:'CITY', region:'EU', seed:3, color:'#6ca'}, {id:7, name:'FEARS', region:'SSA', seed:4, color:'#555'}], matches: [{t1:4,t2:7,s1:null,s2:null},{t1:5,t2:6,s1:null,s2:null},{t1:4,t2:6,s1:null,s2:null},{t1:5,t2:7,s1:null,s2:null},{t1:4,t2:5,s1:null,s2:null},{t1:6,t2:7,s1:null,s2:null}] },
-    { id: 2, name: 'GROUP C', teams: [{id:8, name:'TWISTED', region:'MENA', seed:1, color:'#0f0'}, {id:9, name:'NIP', region:'EU', seed:2, color:'#ff0'}, {id:10, name:'SHOPIFY', region:'NA', seed:3, color:'#0fa'}, {id:11, name:'TSM', region:'APAC', seed:4, color:'#fff'}], matches: [{t1:8,t2:11,s1:null,s2:null},{t1:9,t2:10,s1:null,s2:null},{t1:8,t2:10,s1:null,s2:null},{t1:9,t2:11,s1:null,s2:null},{t1:8,t2:9,s1:null,s2:null},{t1:10,t2:11,s1:null,s2:null}] },
-    { id: 3, name: 'GROUP D', teams: [{id:12, name:'MATES', region:'EU', seed:1, color:'#f0f'}, {id:13, name:'SSG', region:'NA', seed:2, color:'#f5b'}, {id:14, name:'R8', region:'MENA', seed:3, color:'#f00'}, {id:15, name:'FURIA', region:'SAM', seed:4, color:'#000'}], matches: [{t1:12,t2:15,s1:null,s2:null},{t1:13,t2:14,s1:null,s2:null},{t1:12,t2:14,s1:null,s2:null},{t1:13,t2:15,s1:null,s2:null},{t1:12,t2:13,s1:null,s2:null},{t1:14,t2:15,s1:null,s2:null}] }
-];
-
-let data = JSON.parse(localStorage.getItem('rlcs_final_points')) || { groups: DEFAULT_GROUPS, bracket: {} };
+// Generar partidos si están vacíos
+data.groups.forEach(g => {
+    if(g.matches.length === 0) {
+        g.matches = [{t1:g.teams[0].id,t2:g.teams[3].id,s1:null,s2:null,g1:0,g2:0},{t1:g.teams[1].id,t2:g.teams[2].id,s1:null,s2:null,g1:0,g2:0},{t1:g.teams[0].id,t2:g.teams[2].id,s1:null,s2:null,g1:0,g2:0},{t1:g.teams[1].id,t2:g.teams[3].id,s1:null,s2:null,g1:0,g2:0},{t1:g.teams[0].id,t2:g.teams[1].id,s1:null,s2:null,g1:0,g2:0},{t1:g.teams[2].id,t2:g.teams[3].id,s1:null,s2:null,g1:0,g2:0}];
+    }
+});
 
 function getSortedStandings(teams, matches) {
     return [...teams].sort((a, b) => {
         const stats = (id) => {
-            let w = 0, diff = 0;
+            let sW=0, gW=0, gL=0, glF=0, glA=0;
             matches.forEach(m => {
-                if (m.s1 !== null && m.s2 !== null) {
-                    if (m.t1 === id) { w += (m.s1 > m.s2 ? 1 : 0); diff += (m.s1 - m.s2); }
-                    else if (m.t2 === id) { w += (m.s2 > m.s1 ? 1 : 0); diff += (m.s2 - m.s1); }
+                if (m.s1 === 3 || m.s2 === 3) {
+                    if (m.t1 === id) { sW+=(m.s1>m.s2?1:0); gW+=m.s1; gL+=m.s2; glF+=m.g1; glA+=m.g2; }
+                    else if (m.t2 === id) { sW+=(m.s2>m.s1?1:0); gW+=m.s2; gL+=m.s1; glF+=m.g2; glA+=m.g1; }
                 }
             });
-            return { w, diff };
+            return { sW, diff: gW - gL, glD: glF - glA };
         };
-        const as = stats(a.id), bs = stats(b.id);
-        if (bs.w !== as.w) return bs.w - as.w;
-        if (bs.diff !== as.diff) return bs.diff - as.diff;
+        const aS = stats(a.id), bS = stats(b.id);
+        if (bS.sW !== aS.sW) return bS.sW - aS.sW;
+        if (bS.diff !== aS.diff) return bS.diff - aS.diff;
+        if (bS.glD !== aS.glD) return bS.glD - aS.glD;
         return a.seed - b.seed;
     });
 }
@@ -113,54 +144,46 @@ function getSortedStandings(teams, matches) {
 function getBracketTeams() {
     const groups = data.groups.map(g => {
         const sorted = getSortedStandings(g.teams, g.matches);
-        const certainty = g.teams.map(t => ({ id: t.id, counts: [0,0,0,0] }));
-        for(let i=0; i<30000; i++) {
-            const simM = g.matches.map(m => (m.s1 !== null) ? m : {...m, s1: Math.random()>0.5?3:Math.floor(Math.random()*3), s2: Math.random()>0.5?3:Math.floor(Math.random()*3)});
+        const cert = g.teams.map(t => ({ id: t.id, counts: [0,0,0,0] }));
+        for(let i=0; i<3000; i++) {
+            const simM = g.matches.map(m => (m.s1 === 3 || m.s2 === 3) ? m : {...m, s1: Math.random()>0.5?3:0, s2: Math.random()>0.5?0:3});
             const res = getSortedStandings(g.teams, simM);
-            for(let idx=0; idx<4; idx++) certainty.find(x => x.id === res[idx].id).counts[idx]++;
+            for(let idx=0; idx<4; idx++) cert.find(x => x.id === res[idx].id).counts[idx]++;
         }
-        const getSecure = (pos) => (certainty.find(x => x.id === sorted[pos].id).counts[pos] === 30000) ? sorted[pos] : null;
-        return { getSecure };
+        return { getSec: (p) => (cert.find(x => x.id === sorted[p].id).counts[p] === 3000) ? sorted[p] : null };
     });
 
     const m = {
-        UBQF1: [groups[0].getSecure(0), groups[3].getSecure(0)],
-        UBQF2: [groups[1].getSecure(0), groups[2].getSecure(0)],
-        LBR1_1: [groups[2].getSecure(1), groups[3].getSecure(2)],
-        LBR1_2: [groups[1].getSecure(1), groups[0].getSecure(2)],
-        LBR1_3: [groups[3].getSecure(1), groups[2].getSecure(2)],
-        LBR1_4: [groups[0].getSecure(1), groups[1].getSecure(2)]
+        UBQF1:[groups[0].getSec(0), groups[3].getSec(0)], UBQF2:[groups[1].getSec(0), groups[2].getSec(0)],
+        LBR1_1:[groups[2].getSec(1), groups[3].getSec(2)], LBR1_2:[groups[1].getSec(1), groups[0].getSec(2)],
+        LBR1_3:[groups[3].getSec(1), groups[2].getSec(2)], LBR1_4:[groups[0].getSec(1), groups[1].getSec(2)]
     };
-
     const getW = (id) => data.bracket[id] ? m[id][data.bracket[id]-1] : null;
     const getL = (id) => data.bracket[id] ? m[id][data.bracket[id]===1?1:0] : null;
 
-    m.LBR2_1 = [getW('LBR1_1'), getW('LBR1_2')];
-    m.LBR2_2 = [getW('LBR1_3'), getW('LBR1_4')];
-    m.LBQF1 = [getL('UBQF1'), getW('LBR2_1')];
-    m.LBQF2 = [getL('UBQF2'), getW('LBR2_2')];
-    m.SF1 = [getW('UBQF2'), getW('LBQF1')];
-    m.SF2 = [getW('UBQF1'), getW('LBQF2')];
+    m.LBR2_1 = [getW('LBR1_1'), getW('LBR1_2')]; m.LBR2_2 = [getW('LBR1_3'), getW('LBR1_4')];
+    m.LBQF1 = [getL('UBQF1'), getW('LBR2_1')]; m.LBQF2 = [getL('UBQF2'), getW('LBR2_2')];
+    m.SF1 = [getW('UBQF2'), getW('LBQF1')]; m.SF2 = [getW('UBQF1'), getW('LBQF2')];
     m.GF = [getW('SF1'), getW('SF2')];
     return m;
 }
 
 function renderLCQ() {
     let pts = {};
-    for(let i=0; i<16; i++) pts[i] = POINTS_MAP.GROUPS_4TH; // Base Top 16
+    for(let i=0; i<16; i++) pts[i] = POINTS_MAP.GROUPS_4TH;
 
+    // Simulación masiva para LCQ
     data.groups.forEach(g => {
-        const sorted = getSortedStandings(g.teams, g.matches);
-        const certainty = g.teams.map(t => ({ id: t.id, counts: [0,0,0,0] }));
-        for(let i=0; i<2000; i++) {
-            const simM = g.matches.map(m => (m.s1 !== null) ? m : { ...m, s1: Math.random()>0.5?3:0, s2: Math.random()>0.5?0:3 });
+        const cert = g.teams.map(t => ({ id: t.id, counts: [0,0,0,0] }));
+        for(let i=0; i<5000; i++) {
+            const simM = g.matches.map(m => (m.s1 === 3 || m.s2 === 3) ? m : {...m, s1: Math.random()>0.5?3:0, s2: Math.random()>0.5?0:3});
             const res = getSortedStandings(g.teams, simM);
-            for(let idx=0; idx<4; idx++) certainty.find(x => x.id === res[idx].id).counts[idx]++;
+            for(let idx=0; idx<4; idx++) cert.find(x => x.id === res[idx].id).counts[idx]++;
         }
         g.teams.forEach(t => {
-            const c = certainty.find(x => x.id === t.id);
-            if (c.counts[0]+c.counts[1]+c.counts[2] === 2000) pts[t.id] = Math.max(pts[t.id], POINTS_MAP.LB_R1);
-            if (c.counts[0] === 2000) pts[t.id] = Math.max(pts[t.id], POINTS_MAP.LB_QF); // UBQF garantiza Top 8
+            const c = cert.find(x => x.id === t.id);
+            if (c.counts[0]+c.counts[1]+c.counts[2] === 5000) pts[t.id] = Math.max(pts[t.id], POINTS_MAP.LB_R1);
+            if (c.counts[0] === 5000) pts[t.id] = Math.max(pts[t.id], POINTS_MAP.LB_QF);
         });
     });
 
@@ -169,56 +192,105 @@ function renderLCQ() {
     set(b.LBR2_1, POINTS_MAP.LB_R2); set(b.LBR2_2, POINTS_MAP.LB_R2);
     set(b.SF1, POINTS_MAP.SEMIS); set(b.SF2, POINTS_MAP.SEMIS);
     set(b.GF, POINTS_MAP.FINALIST);
-    if(data.bracket.GF) { const w = b.GF[data.bracket.GF-1]; if(w) pts[w.id] = POINTS_MAP.WINNER; }
+    if(data.bracket.GF) { const winner = b.GF[data.bracket.GF-1]; if(winner) pts[winner.id] = POINTS_MAP.WINNER; }
 
-    const stats = Object.keys(REGION_M1_DATA).map(r => {
+    const stats = Object.keys(REGION_M1).map(r => {
         let m2_pts = 0, m2_best = 0;
         data.groups.forEach(g => g.teams.forEach(t => { if(t.region === r) { m2_pts += pts[t.id]; m2_best = Math.max(m2_best, pts[t.id]); }}));
-        const m1 = REGION_M1_DATA[r];
-        return { name: r, avg: (m1.m1_pts + m2_pts) / (m1.m1_teams * 2), m2_pts, tie: m1.m1_best + m2_best };
+        const m1 = REGION_M1[r];
+        const avg = (m1.pts + m2_pts) / (m1.teams * 2);
+        return { name: r, avg, m2_pts, tie: m1.best + m2_best };
     }).sort((a,b) => b.avg - a.avg || b.tie - a.tie);
 
-    document.getElementById('lcq-body').innerHTML = stats.map((s, i) => `<tr class="${i<4?'top-4':''}"><td>${i+1}</td><td style="text-align:left">${s.name}</td><td>${s.avg.toFixed(2)}</td><td>${s.m2_pts}</td><td>${s.tie}</td></tr>`).join('');
+    const fifthAvg = stats[4].avg;
+    document.getElementById('lcq-body').innerHTML = stats.map((s, i) => `
+        <tr class="${i < 4 && s.avg > fifthAvg ? 'secured-row' : ''}">
+            <td>${i+1}</td><td style="text-align:left">${s.name}</td>
+            <td>${s.avg.toFixed(2)}</td><td>${s.m2_pts}</td><td>${s.tie}</td>
+        </tr>`).join('');
 }
 
 function render() {
     const container = document.getElementById('groups-container');
     container.innerHTML = '';
     data.groups.forEach(g => {
-        const sorted = getSortedStandings(g.teams, g.matches);
-        let html = `<div class="group-card"><h3>${g.name}</h3><table>`;
-        sorted.forEach(t => {
-            html += `<tr><td style="text-align:left"><input class="input-name" value="${t.name}"></td><td>${t.region}</td></tr>`;
+        const simResults = (function() {
+            let r = g.teams.map(t => ({ id: t.id, counts: [0,0,0,0] }));
+            for(let i=0; i<30000; i++) {
+                const simM = g.matches.map(m => (m.s1 === 3 || m.s2 === 3) ? m : {...m, s1: Math.random()>0.5?3:0, s2: Math.random()>0.5?0:3});
+                const res = getSortedStandings(g.teams, simM);
+                for(let idx=0; idx<4; idx++) r.find(x => x.id === res[idx].id).counts[idx]++;
+            }
+            return r;
+        })();
+
+        const card = document.createElement('div');
+        card.className = 'group-card';
+        let html = `<h2>${g.name}</h2><button class="matrix-btn ${g.matches.filter(m=>m.s1===null).length===2?'active':''}" onclick="openMatrix(${g.id})">MATRIZ FINAL</button><table><thead><tr><th>TEAM</th><th>S</th><th>G</th><th>1º</th><th>2º</th><th>3º</th><th>4º</th></tr></thead><tbody>`;
+        
+        getSortedStandings(g.teams, g.matches).forEach(team => {
+            const s = simResults.find(x => x.id === team.id);
+            html += `<tr><td style="text-align:left; display:flex; align-items:center;">
+                <input type="color" class="color-picker" value="${team.color}" onchange="data.groups[${g.id}].teams.find(t=>t.id===${team.id}).color=this.value; save()">
+                <input class="input-name" value="${team.name}" onchange="data.groups[${g.id}].teams.find(t=>t.id===${team.id}).name=this.value; save()"></td>
+                <td>-</td><td>-</td>
+                ${s.counts.map(c => { const p = c/30000; return `<td class="prob-cell" style="background:rgba(226,68,68,${p})">${(p*100).toFixed(1)}%</td>`}).join('')}</tr>`;
         });
-        html += `</table>`;
+        
+        html += `</tbody></table><div class="match-list">`;
         g.matches.forEach((m, mi) => {
-            const t1 = g.teams.find(x => x.id === m.t1), t2 = g.teams.find(x => x.id === m.t2);
-            html += `<div style="display:flex; justify-content:center; gap:10px; margin-bottom:5px;">
-                <span>${t1.name}</span>
-                <div class="score-box">
-                    <input type="number" value="${m.s1??''}" onchange="data.groups[${g.id}].matches[${mi}].s1=parseInt(this.value); save()">
-                    <input type="number" value="${m.s2??''}" onchange="data.groups[${g.id}].matches[${mi}].s2=parseInt(this.value); save()">
-                </div>
-                <span>${t2.name}</span>
-            </div>`;
+            const t1 = g.teams.find(t=>t.id===m.t1), t2 = g.teams.find(t=>t.id===m.t2);
+            html += `<div class="match-item" draggable="true" ondragstart="drag(${g.id},${mi})" ondragover="event.preventDefault()" ondrop="drop(${g.id},${mi})">
+                <div class="match-main"><span>${t1.name}</span><div class="score-box">
+                <input type="number" value="${m.s1??''}" onchange="upd(${g.id},${mi},'s1',this.value)">
+                <input type="number" value="${m.s2??''}" onchange="upd(${g.id},${mi},'s2',this.value)"></div><span>${t2.name}</span></div>
+                <div class="goals-container"><input type="number" value="${m.g1}" onchange="upd(${g.id},${mi},'g1',this.value)">-
+                <input type="number" value="${m.g2}" onchange="upd(${g.id},${mi},'g2',this.value)"></div></div>`;
         });
-        container.innerHTML += html + `</div>`;
+        card.innerHTML = html + `</div>`; container.appendChild(card);
     });
 
-    const b = getBracketTeams();
-    const draw = (id, l, arr, p1, p2) => `<div class="b-match"><div style="font-size:0.6em; padding:2px; color:#555">${l}</div>` +
-        arr.map((t, i) => `<div class="b-team ${t ? (data.bracket[id] === i+1 ? 'winner' : (data.bracket[id] ? 'loser' : '')) : ''}" onclick="data.bracket['${id}']=${i+1}; save()">${t ? t.name : (i===0?p1:p2)}</div>`).join('') + `</div>`;
+    const m = getBracketTeams();
+    const renderB = (id, label, arr, p1, p2) => `<div class="b-match"><div class="b-match-title">${label}</div>` +
+        arr.map((t, i) => `<div class="b-team ${t ? (data.bracket[id] === i+1 ? 'winner' : (data.bracket[id] ? 'loser' : '')) : 'tbd'}" onclick="if(${!!(arr[0]&&arr[1])}){data.bracket['${id}']=(${data.bracket[id]}===${i+1}?null:${i+1});save()}">
+        <div class="color-bar" style="background:${t?t.color:'transparent'}"></div>${t ? t.name : (i===0?p1:p2)}</div>`).join('') + `</div>`;
 
     document.getElementById('bracket-container').innerHTML = `
-        <div class="bracket-col">${draw('UBQF1','UBQF 1',b.UBQF1,'A1','D1')}${draw('UBQF2','UBQF 2',b.UBQF2,'B1','C1')}</div>
-        <div class="bracket-col">${draw('LBR1_1','LBR1 1',b.LBR1_1,'C2','D3')}${draw('LBR1_2','LBR1 2',b.LBR1_2,'B2','A3')}</div>
-        <div class="bracket-col">${draw('LBR2_1','LBR2 1',b.LBR2_1,'W LBR1-1','W LBR1-2')}</div>
-        <div class="bracket-col">${draw('GF','GRAND FINAL',b.GF,'W SF1','W SF2')}</div>
+        <div class="bracket-col">${renderB('UBQF1','UBQF 1',m.UBQF1,'A1','D1')}${renderB('UBQF2','UBQF 2',m.UBQF2,'B1','C1')}
+        <div style="height:20px"></div>${renderB('LBR1_1','LBR1 #1',m.LBR1_1,'C2','D3')}${renderB('LBR1_2','LBR1 #2',m.LBR1_2,'B2','A3')}</div>
+        <div class="bracket-col" style="justify-content:center">${renderB('LBR2_1','LBR2 #1',m.LBR2_1,'W LBR1-1','W LBR1-2')}</div>
+        <div class="bracket-col" style="justify-content:center">${renderB('LBQF1','LBQF 1',m.LBQF1,'L UBQF-1','W LBR2-1')}</div>
+        <div class="bracket-col" style="justify-content:center">${renderB('SF1','SF 1',m.SF1,'W UBQF-2','W LBQF-1')}</div>
+        <div class="bracket-col" style="justify-content:center">${renderB('GF','GRAND FINAL',m.GF,'W SF1','W SF2')}</div>
     `;
     renderLCQ();
 }
 
-function save() { localStorage.setItem('rlcs_final_points', JSON.stringify(data)); render(); }
+function openMatrix(gi) {
+    const g = data.groups[gi], p = g.matches.filter(m => m.s1 === null), m1 = p[0], m2 = p[1];
+    let html = "";
+    for (let pos=0; pos<4; pos++) {
+        html += `<div class="matrix-section"><div class="matrix-header-info">${pos+1}º PUESTO</div><div class="matrix-grid"><div class="matrix-cell m-head">M1/M2</div>`;
+        SCORES.forEach(s => html += `<div class="matrix-cell m-axis">${s[0]}-${s[1]}</div>`);
+        SCORES.forEach(s1 => { html += `<div class="matrix-cell m-axis">${s1[0]}-${s1[1]}</div>`;
+            SCORES.forEach(s2 => {
+                const sim = g.matches.map(m => m === m1 ? {...m, s1:s1[0], s2:s1[1]} : (m === m2 ? {...m, s1:s2[0], s2:s2[1]} : m));
+                const t = getSortedStandings(g.teams, sim)[pos];
+                html += `<div class="matrix-cell" style="background:${t.color}">${t.name}</div>`;
+            });
+        });
+        html += `</div></div>`;
+    }
+    document.getElementById('matrix-content').innerHTML = html;
+    document.getElementById('matrix-window').style.display = 'block';
+}
+
+function closeMatrix() { document.getElementById('matrix-window').style.display = 'none'; }
+let dragged = null;
+function drag(gi, mi) { dragged = {gi, mi}; }
+function drop(gi, mi) { if (dragged.gi === gi) { const l = data.groups[gi].matches, item = l.splice(dragged.mi, 1)[0]; l.splice(mi, 0, item); save(); } }
+function upd(gi, mi, f, v) { data.groups[gi].matches[mi][f] = v==='' ? null : parseInt(v); save(); }
+function save() { localStorage.setItem('rlcs_pro_final', JSON.stringify(data)); render(); }
 render();
 </script>
 </body>
