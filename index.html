@@ -10,7 +10,8 @@
         * { box-sizing: border-box; font-family: 'Bourgeois', sans-serif; text-transform: uppercase; }
 
         body { background-color: var(--bg); color: var(--text); margin: 0; padding: 15px; }
-        .header { border-left: 5px solid var(--accent); margin-bottom: 20px; padding: 5px 15px; background: linear-gradient(90deg, #111 0%, transparent 100%); }
+        .header { border-left: 5px solid var(--accent); margin-bottom: 20px; padding: 5px 15px; background: linear-gradient(90deg, #111 0%, transparent 100%); margin-top: 30px; }
+        .header:first-child { margin-top: 0; }
         
         .groups-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
         .group-card { background: var(--card-bg); border: 1px solid var(--border); padding: 15px; border-radius: 4px; }
@@ -51,12 +52,28 @@
         .score-box input:focus { border-color: var(--accent); }
         .goals-container { margin-top: 10px; display: flex; justify-content: center; align-items: center; gap: 10px; border-top: 1px solid #1a1a1a; padding-top: 8px; }
         .goals-container input { width: 50px; background: #050505; border: 1px solid #333; color: var(--accent); text-align: center; font-weight: bold; padding: 3px; }
+
+        /* BRACKET STYLES */
+        .bracket-board { display: flex; gap: 25px; overflow-x: auto; padding: 20px 0; }
+        .bracket-col { display: flex; flex-direction: column; gap: 15px; min-width: 220px; }
+        .b-match { background: #111; border: 1px solid #333; border-radius: 4px; overflow: hidden; display: flex; flex-direction: column; }
+        .b-match-title { font-size: 0.65em; color: #888; text-align: center; background: #0a0a0a; padding: 4px; border-bottom: 1px solid #222; }
+        .b-team { padding: 10px; cursor: pointer; font-size: 0.85em; transition: 0.2s; border-bottom: 1px solid #1a1a1a; display: flex; align-items: center; gap: 8px; user-select: none; }
+        .b-team:last-child { border-bottom: none; }
+        .b-team:hover:not(.tbd) { background: #222; }
+        .b-team.winner { background: #1e3a1e; color: #fff; font-weight: bold; }
+        .b-team.loser { opacity: 0.3; }
+        .b-team.tbd { color: #555; cursor: default; }
+        .color-bar { width: 5px; height: 100%; border-radius: 2px; display: inline-block; }
     </style>
 </head>
 <body>
 
     <div class="header"><h1>RLCS PARIS MAJOR GROUPS</h1></div>
     <div id="groups-container" class="groups-grid"></div>
+
+    <div class="header"><h1>PLAYOFFS BRACKET</h1></div>
+    <div id="bracket-container" class="bracket-board"></div>
 
     <div id="matrix-window" class="matrix-window">
         <div class="matrix-controls"><button class="close-matrix" onclick="closeMatrix()">CLOSER</button></div>
@@ -72,8 +89,12 @@ let data = JSON.parse(localStorage.getItem('rlcs_pro_v1')) || {
         matches: [{t1: 0, t2: 3, s1: null, s2: null, g1: 0, g2: 0}, {t1: 1, t2: 2, s1: null, s2: null, g1: 0, g2: 0},
                   {t1: 0, t2: 2, s1: null, s2: null, g1: 0, g2: 0}, {t1: 1, t2: 3, s1: null, s2: null, g1: 0, g2: 0},
                   {t1: 0, t2: 1, s1: null, s2: null, g1: 0, g2: 0}, {t1: 2, t2: 3, s1: null, s2: null, g1: 0, g2: 0}]
-    }))
+    })),
+    bracket: {} // Nuevo estado para el bracket
 };
+
+// Asegurar que el objeto bracket exista para usuarios antiguos cargando desde LocalStorage
+if (!data.bracket) data.bracket = {};
 
 function getSortedStandings(teams, matches) {
     return [...teams].sort((a, b) => {
@@ -100,7 +121,7 @@ function checkMatrixEligibility(g) {
     if (pend.length !== 2) return false;
     const teamIds = new Set();
     pend.forEach(m => { teamIds.add(m.t1); teamIds.add(m.t2); });
-    return teamIds.size === 4; // Asegura que los 4 equipos distintos estén involucrados
+    return teamIds.size === 4; 
 }
 
 function openMatrix(groupId) {
@@ -133,6 +154,111 @@ function openMatrix(groupId) {
 }
 
 function closeMatrix() { document.getElementById('matrix-window').style.display = 'none'; }
+
+// --- FUNCIONES DEL BRACKET ---
+function getBracketTeams() {
+    const stdA = getSortedStandings(data.groups[0].teams, data.groups[0].matches);
+    const stdB = getSortedStandings(data.groups[1].teams, data.groups[1].matches);
+    const stdC = getSortedStandings(data.groups[2].teams, data.groups[2].matches);
+    const stdD = getSortedStandings(data.groups[3].teams, data.groups[3].matches);
+
+    const t = (std, pos) => std[pos];
+
+    const matches = {
+        UBQF1: [t(stdA, 0), t(stdD, 0)],
+        UBQF2: [t(stdB, 0), t(stdC, 0)],
+        LBR1_1: [t(stdC, 1), t(stdD, 2)],
+        LBR1_2: [t(stdB, 1), t(stdA, 2)],
+        LBR1_3: [t(stdD, 1), t(stdC, 2)],
+        LBR1_4: [t(stdA, 1), t(stdB, 2)],
+    };
+
+    const getW = (mId) => data.bracket[mId] ? matches[mId][data.bracket[mId] - 1] : null;
+    const getL = (mId) => data.bracket[mId] ? matches[mId][data.bracket[mId] === 1 ? 1 : 0] : null;
+
+    matches.LBR2_1 = [getW('LBR1_1'), getW('LBR1_2')];
+    matches.LBR2_2 = [getW('LBR1_3'), getW('LBR1_4')];
+
+    matches.LBQF1 = [getL('UBQF1'), getW('LBR2_1')];
+    matches.LBQF2 = [getL('UBQF2'), getW('LBR2_2')];
+
+    matches.SF1 = [getW('UBQF2'), getW('LBQF1')];
+    matches.SF2 = [getW('UBQF1'), getW('LBQF2')];
+
+    matches.GF = [getW('SF1'), getW('SF2')];
+
+    return matches;
+}
+
+function selectWinner(matchId, winnerIndex) {
+    if (data.bracket[matchId] === winnerIndex) {
+        data.bracket[matchId] = null; // Deseleccionar si se clickea de nuevo
+    } else {
+        data.bracket[matchId] = winnerIndex;
+    }
+    save();
+}
+
+function renderMatchHTML(mId, label, mData, p1, p2) {
+    const t1 = mData[0];
+    const t2 = mData[1];
+    const w = data.bracket[mId];
+
+    const t1Class = t1 ? (w === 1 ? 'winner' : (w === 2 ? 'loser' : '')) : 'tbd';
+    const t2Class = t2 ? (w === 2 ? 'winner' : (w === 1 ? 'loser' : '')) : 'tbd';
+
+    const t1Click = t1 && t2 ? `onclick="selectWinner('${mId}', 1)"` : '';
+    const t2Click = t1 && t2 ? `onclick="selectWinner('${mId}', 2)"` : '';
+
+    const t1Color = t1 ? `<div class="color-bar" style="background:${t1.color}"></div>&nbsp;` : '';
+    const t2Color = t2 ? `<div class="color-bar" style="background:${t2.color}"></div>&nbsp;` : '';
+
+    return `
+    <div class="b-match">
+        <div class="b-match-title">${label}</div>
+        <div class="b-team ${t1Class}" ${t1Click}>${t1Color}${t1 ? t1.name : p1}</div>
+        <div class="b-team ${t2Class}" ${t2Click}>${t2Color}${t2 ? t2.name : p2}</div>
+    </div>
+    `;
+}
+
+function renderBracket() {
+    const m = getBracketTeams();
+    const html = `
+        <div class="bracket-col">
+            ${renderMatchHTML('UBQF1', 'UPPER BRACKET QF 1', m.UBQF1, 'A1', 'D1')}
+            ${renderMatchHTML('UBQF2', 'UPPER BRACKET QF 2', m.UBQF2, 'B1', 'C1')}
+            <div style="height: 30px;"></div>
+            ${renderMatchHTML('LBR1_1', 'LOWER BRACKET R1 #1', m.LBR1_1, 'C2', 'D3')}
+            ${renderMatchHTML('LBR1_2', 'LOWER BRACKET R1 #2', m.LBR1_2, 'B2', 'A3')}
+            ${renderMatchHTML('LBR1_3', 'LOWER BRACKET R1 #3', m.LBR1_3, 'D2', 'C3')}
+            ${renderMatchHTML('LBR1_4', 'LOWER BRACKET R1 #4', m.LBR1_4, 'A2', 'B3')}
+        </div>
+        
+        <div class="bracket-col" style="justify-content: flex-end; padding-bottom: 25px;">
+            ${renderMatchHTML('LBR2_1', 'LOWER BRACKET R2 #1', m.LBR2_1, 'W LBR1 #1', 'W LBR1 #2')}
+            <div style="height: 45px;"></div>
+            ${renderMatchHTML('LBR2_2', 'LOWER BRACKET R2 #2', m.LBR2_2, 'W LBR1 #3', 'W LBR1 #4')}
+        </div>
+
+        <div class="bracket-col" style="justify-content: flex-end; padding-bottom: 60px;">
+            ${renderMatchHTML('LBQF1', 'LOWER BRACKET QF 1', m.LBQF1, 'Loser UBQF 1', 'W LBR2 #1')}
+            <div style="height: 60px;"></div>
+            ${renderMatchHTML('LBQF2', 'LOWER BRACKET QF 2', m.LBQF2, 'Loser UBQF 2', 'W LBR2 #2')}
+        </div>
+
+        <div class="bracket-col" style="justify-content: center; gap: 80px;">
+            ${renderMatchHTML('SF1', 'SEMIFINAL 1', m.SF1, 'W UBQF 2', 'W LBQF 1')}
+            ${renderMatchHTML('SF2', 'SEMIFINAL 2', m.SF2, 'W UBQF 1', 'W LBQF 2')}
+        </div>
+
+        <div class="bracket-col" style="justify-content: center;">
+            ${renderMatchHTML('GF', 'GRAND FINAL', m.GF, 'Winner SF 1', 'Winner SF 2')}
+        </div>
+    `;
+    document.getElementById('bracket-container').innerHTML = html;
+}
+// ------------------------------
 
 function render() {
     const container = document.getElementById('groups-container');
@@ -204,6 +330,9 @@ function render() {
         card.innerHTML = html + `</div>`;
         container.appendChild(card);
     });
+
+    // Renderizamos el bracket al final del proceso principal
+    renderBracket();
 }
 
 let draggedMatch = null;
