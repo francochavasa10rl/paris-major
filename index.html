@@ -156,38 +156,57 @@ function openMatrix(groupId) {
 function closeMatrix() { document.getElementById('matrix-window').style.display = 'none'; }
 
 // --- FUNCIONES DEL BRACKET ---
+// --- FUNCIONES DEL BRACKET ACTUALIZADAS ---
 function getBracketTeams() {
-    const stdA = getSortedStandings(data.groups[0].teams, data.groups[0].matches);
-    const stdB = getSortedStandings(data.groups[1].teams, data.groups[1].matches);
-    const stdC = getSortedStandings(data.groups[2].teams, data.groups[2].matches);
-    const stdD = getSortedStandings(data.groups[3].teams, data.groups[3].matches);
+    // Obtenemos los standings actuales
+    const groups = data.groups.map(g => {
+        const sorted = getSortedStandings(g.teams, g.matches);
+        
+        // Calculamos simulación interna para verificar seguridad del 100%
+        const certainty = g.teams.map(t => ({ id: t.id, counts: [0,0,0,0] }));
+        for(let i=0; i<5000; i++) { // 5k sim para rapidez en el cálculo del bracket
+            const simM = g.matches.map(m => {
+                if (m.s1 === 3 || m.s2 === 3) return m;
+                let c1 = 0, c2 = 0;
+                while (c1 < 3 && c2 < 3) Math.random() > 0.5 ? c1++ : c2++;
+                return {...m, s1: c1, s2: c2};
+            });
+            const res = getSortedStandings(g.teams, simM);
+            for(let idx=0; idx<4; idx++) certainty.find(x => x.id === res[idx].id).counts[idx]++;
+        }
+        
+        // Función para devolver el equipo solo si es 100% seguro en esa posición
+        const getSecure = (pos) => {
+            const teamAtPos = sorted[pos];
+            const stats = certainty.find(x => x.id === teamAtPos.id);
+            // Si el equipo estuvo en esta posición en el 100% de las 5000 simulaciones
+            return (stats.counts[pos] === 5000) ? teamAtPos : null;
+        };
 
-    const t = (std, pos) => std[pos];
+        return { getSecure };
+    });
 
-    const matches = {
-        UBQF1: [t(stdA, 0), t(stdD, 0)],
-        UBQF2: [t(stdB, 0), t(stdC, 0)],
-        LBR1_1: [t(stdC, 1), t(stdD, 2)],
-        LBR1_2: [t(stdB, 1), t(stdA, 2)],
-        LBR1_3: [t(stdD, 1), t(stdC, 2)],
-        LBR1_4: [t(stdA, 1), t(stdB, 2)],
+    const m = {
+        UBQF1: [groups[0].getSecure(0), groups[3].getSecure(0)], // A1 vs D1
+        UBQF2: [groups[1].getSecure(0), groups[2].getSecure(0)], // B1 vs C1
+        LBR1_1: [groups[2].getSecure(1), groups[3].getSecure(2)], // C2 vs D3
+        LBR1_2: [groups[1].getSecure(1), groups[0].getSecure(2)], // B2 vs A3
+        LBR1_3: [groups[3].getSecure(1), groups[2].getSecure(2)], // D2 vs C3
+        LBR1_4: [groups[0].getSecure(1), groups[1].getSecure(2)], // A2 vs B3
     };
 
-    const getW = (mId) => data.bracket[mId] ? matches[mId][data.bracket[mId] - 1] : null;
-    const getL = (mId) => data.bracket[mId] ? matches[mId][data.bracket[mId] === 1 ? 1 : 0] : null;
+    const getW = (mId) => data.bracket[mId] ? m[mId][data.bracket[mId] - 1] : null;
+    const getL = (mId) => data.bracket[mId] ? m[mId][data.bracket[mId] === 1 ? 1 : 0] : null;
 
-    matches.LBR2_1 = [getW('LBR1_1'), getW('LBR1_2')];
-    matches.LBR2_2 = [getW('LBR1_3'), getW('LBR1_4')];
+    m.LBR2_1 = [getW('LBR1_1'), getW('LBR1_2')];
+    m.LBR2_2 = [getW('LBR1_3'), getW('LBR1_4')];
+    m.LBQF1 = [getL('UBQF1'), getW('LBR2_1')];
+    m.LBQF2 = [getL('UBQF2'), getW('LBR2_2')];
+    m.SF1 = [getW('UBQF2'), getW('LBQF1')];
+    m.SF2 = [getW('UBQF1'), getW('LBQF2')];
+    m.GF = [getW('SF1'), getW('SF2')];
 
-    matches.LBQF1 = [getL('UBQF1'), getW('LBR2_1')];
-    matches.LBQF2 = [getL('UBQF2'), getW('LBR2_2')];
-
-    matches.SF1 = [getW('UBQF2'), getW('LBQF1')];
-    matches.SF2 = [getW('UBQF1'), getW('LBQF2')];
-
-    matches.GF = [getW('SF1'), getW('SF2')];
-
-    return matches;
+    return m;
 }
 
 function selectWinner(matchId, winnerIndex) {
