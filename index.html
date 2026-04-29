@@ -369,7 +369,7 @@ function calcLCQ(teamPts) {
   }).sort((a,b)=>Math.abs(b.avg-a.avg)>0.0001?b.avg-a.avg:b.best-a.best);
 }
 
-function runLCQSim(n=30000) {
+function runLCQSim(n=100000) {
   const cnt={}, m2s={}, bst={};
   Object.keys(REGIONS).forEach(r=>{cnt[r]=0; m2s[r]=0; bst[r]=0;});
   for(let i=0;i<n;i++){
@@ -392,7 +392,7 @@ function runLCQSim(n=30000) {
 }
 
 function renderLCQ() {
-  const N=30000;
+  const N=100000;
   const sim=runLCQSim(N);
 
   let html=`<div class="lcq-container-inner">
@@ -472,7 +472,7 @@ function render() {
     // Group probability simulation (30k)
     const simR=(()=>{
       let r=g.teams.map(t=>({id:t.id,counts:[0,0,0,0]}));
-      for(let i=0;i<30000;i++){
+      for(let i=0;i<100000;i++){
         const sm=g.matches.map(m=>{
           if(m.s1===3||m.s2===3) return m;
           let c1=0,c2=0; while(c1<3&&c2<3) Math.random()>.5?c1++:c2++;
@@ -507,7 +507,7 @@ function render() {
         </td>
         <td>${sW}-${sL}</td><td>${gW}-${gL}</td>
         ${s.counts.map(c=>{
-          const p=c/30000;
+          const p=c/100000;
           return `<td class="prob-cell" style="background:rgba(226,68,68,${p});color:${p>0.4?'#fff':'#666'}">${(p*100).toFixed(1)}%</td>`;
         }).join('')}
       </tr>`;
